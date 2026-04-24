@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warranty Dashboard v3 – MediaMart</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#0d1117;--sf:#161b22;--s2:#1c2230;--bd:#30363d;
+  --tx:#e6edf3;--mu:#7d8590;
+  --a1:#f78166;--a2:#58a6ff;--a3:#3fb950;--a4:#d2a8ff;--a5:#e3b341;--a6:#ffa657;
+  --dg:#f85149;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+
+/* ── UPLOAD ── */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px}
+.up-logo{font-size:2.8rem;font-weight:800;color:var(--a1);letter-spacing:-0.04em;margin-bottom:6px}
+.up-sub{color:var(--mu);font-size:0.88rem;margin-bottom:44px}
+.drop-zone{width:480px;border:2px dashed var(--bd);border-radius:20px;padding:48px 36px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--a2);background:rgba(88,166,255,0.05)}
+.drop-icon{font-size:2.8rem;margin-bottom:14px;opacity:.45}
+.drop-title{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.drop-hint{font-size:0.76rem;color:var(--mu);line-height:1.65}
+#file-input{display:none}
+.btn-up{margin-top:22px;padding:11px 30px;background:var(--a2);color:#0d1117;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.btn-up:hover{opacity:.85}
+.up-note{margin-top:18px;font-size:0.72rem;color:var(--mu);text-align:center}
+.prog-bar{width:480px;height:4px;background:var(--bd);border-radius:2px;margin-top:18px;display:none}
+.prog-fill{height:100%;width:0%;background:var(--a2);border-radius:2px;transition:width .3s}
+.err-msg{color:var(--dg);font-size:0.78rem;margin-top:10px;display:none}
+
+/* ── HEADER ── */
+#dashboard{display:none}
+header{background:var(--sf);border-bottom:1px solid var(--bd);padding:14px 26px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200}
+.hlogo{width:38px;height:38px;background:linear-gradient(135deg,var(--a1),var(--a5));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#0d1117;flex-shrink:0}
+header h1{font-size:1.05rem;font-weight:700;letter-spacing:-0.02em}
+header p{font-size:0.68rem;color:var(--mu);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.hright{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.b-dg{background:rgba(248,81,73,.15);color:var(--dg);border:1px solid rgba(248,81,73,.3)}
+.b-ok{background:rgba(63,185,80,.15);color:var(--a3);border:1px solid rgba(63,185,80,.3)}
+.b-fil{background:rgba(88,166,255,.15);color:var(--a2);border:1px solid rgba(88,166,255,.3);display:none}
+.btn-sm{padding:5px 13px;background:transparent;border:1px solid var(--bd);border-radius:7px;color:var(--mu);font-size:0.72rem;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
+.btn-sm:hover{border-color:var(--a1);color:var(--a1)}
+
+/* ── FILTER BAR ── */
+#filter-bar{background:var(--s2);border-bottom:1px solid var(--bd);padding:10px 26px;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu)}
+.filter-select{padding:6px 10px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:0.78rem;font-family:inherit;cursor:pointer;min-width:150px;max-width:220px}
+.filter-select:focus{outline:none;border-color:var(--a2)}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.chip{padding:4px 12px;background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3);border-radius:20px;font-size:0.72rem;color:var(--a2);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background .15s}
+.chip:hover{background:rgba(88,166,255,.22)}
+.chip.active{background:var(--a2);color:#0d1117;border-color:var(--a2)}
+.chip-remove{margin-left:5px;opacity:.7}
+.btn-clear-filter{padding:5px 12px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;color:var(--dg);font-size:0.72rem;cursor:pointer;font-family:inherit}
+.btn-clear-filter:hover{background:rgba(248,81,73,.2)}
+
+/* ── MAIN ── */
+main{padding:22px 26px;max-width:1650px;margin:0 auto}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin-bottom:22px}
+.kpi{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:15px 13px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--lc,var(--bd));border-radius:11px 11px 0 0}
+.kpi-lbl{font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);margin-bottom:7px}
+.kpi-val{font-size:1.7rem;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;letter-spacing:-.03em}
+.kpi-sub{font-size:0.66rem;color:var(--mu);margin-top:4px}
+.kpi-ico{position:absolute;right:11px;top:11px;font-size:1.2rem;opacity:.13}
+
+.sec-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.sec-title::before{content:'';width:3px;height:11px;background:var(--a2);border-radius:2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.gf{margin-bottom:16px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:16px}
+.card-title{font-size:0.8rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title small{font-size:0.66rem;color:var(--mu);font-weight:400}
+
+/* bar list */
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;align-items:center;gap:8px;font-size:0.74rem}
+.bar-name{width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:6px;background:var(--s2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.bar-val{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--mu);width:46px;text-align:right}
+
+/* ring */
+.ring-wrap{display:flex;align-items:center;justify-content:center;gap:18px;padding:6px 0}
+.ring-cnt{position:relative;display:flex;align-items:center;justify-content:center}
+.ring-svg{width:100px;height:100px}
+.ring-center{position:absolute;text-align:center}
+.ring-pct{font-size:1.3rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+.ring-lbl{font-size:0.58rem;color:var(--mu)}
+.legend{display:flex;flex-direction:column;gap:8px}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:0.74rem}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leg-cnt{font-family:'JetBrains Mono',monospace;color:var(--mu);font-size:0.66rem;margin-left:auto}
+
+/* prog bars */
+.prog-row{margin-bottom:12px}
+.prog-header{display:flex;justify-content:space-between;font-size:0.74rem;margin-bottom:4px}
+.prog-val{font-family:'JetBrains Mono',monospace;color:var(--a2)}
+.prog-bar-t{height:9px;background:var(--s2);border-radius:4px;overflow:hidden}
+.prog-fill-t{height:100%;border-radius:4px;transition:width .5s}
+
+/* ── WEEKLY DRILL-DOWN PANEL ── */
+#weekly-panel{display:none;position:fixed;top:0;right:0;width:480px;height:100vh;background:var(--sf);border-left:1px solid var(--bd);z-index:500;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
+.wp-header{padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.wp-title{font-size:1rem;font-weight:700;flex:1}
+.wp-sub{font-size:0.72rem;color:var(--mu);margin-top:2px}
+.btn-close{width:32px;height:32px;background:transparent;border:1px solid var(--bd);border-radius:8px;color:var(--mu);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-close:hover{border-color:var(--a1);color:var(--a1)}
+.wp-body{flex:1;overflow-y:auto;padding:18px 20px}
+.wp-kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.wp-kpi{background:var(--s2);border-radius:9px;padding:12px 10px;text-align:center}
+.wp-kpi .lbl{font-size:0.62rem;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.wp-kpi .val{font-size:1.2rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+.wp-section{font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin:16px 0 8px}
+.wp-bar-list{display:flex;flex-direction:column;gap:7px}
+.wp-bar-item{display:flex;align-items:center;gap:8px;font-size:0.72rem}
+.wp-bar-name{width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wp-bar-track{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.wp-bar-fill{height:100%;border-radius:3px}
+.wp-bar-val{font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:var(--mu);width:38px;text-align:right}
+.week-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.wk-btn{padding:4px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--mu);font-size:0.68rem;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.wk-btn:hover{border-color:var(--a2);color:var(--a2)}
+.wk-btn.sel{background:var(--a2);color:#0d1117;border-color:var(--a2)}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:490}
+
+/* city multi-select dropdown */
+.city-dropdown{position:relative;display:inline-block}
+.city-dd-btn{padding:6px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:0.76rem;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;min-width:180px}
+.city-dd-btn:hover{border-color:var(--a2)}
+.city-dd-panel{position:absolute;top:calc(100%+4px);left:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px;min-width:220px;max-height:320px;overflow-y:auto;z-index:300;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.city-dd-panel.open{display:block}
+.city-search{width:100%;padding:6px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:7px;color:var(--tx);font-size:0.76rem;font-family:inherit;margin-bottom:8px}
+.city-search:focus{outline:none;border-color:var(--a2)}
+.city-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:0.76rem;transition:background .1s}
+.city-opt:hover{background:var(--s2)}
+.city-opt input{accent-color:var(--a2);width:14px;height:14px;cursor:pointer}
+.city-opt-all{font-weight:700;border-bottom:1px solid var(--bd);margin-bottom:4px;padding-bottom:10px}
+
+footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-top:1px solid var(--bd);margin-top:10px;font-family:'JetBrains Mono',monospace}
+
+/* ── TAB NAV ── */
+#tab-nav{background:var(--sf);border-bottom:1px solid var(--bd);padding:0 26px;display:none;flex-direction:row}
+.tab-btn{padding:12px 20px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--mu);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tab-btn:hover{color:var(--tx)}
+.tab-btn.active{color:var(--a2);border-bottom-color:var(--a2)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── HÀNG KHÁCH TAB ── */
+.sp-table{width:100%;border-collapse:collapse;font-size:0.76rem}
+.sp-table th{padding:8px 10px;text-align:left;font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);border-bottom:1px solid var(--bd)}
+.sp-table td{padding:8px 10px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle}
+.sp-table tr:last-child td{border-bottom:none}
+.sp-table tr:hover td{background:rgba(255,255,255,.025)}
+.stack-bar{height:7px;border-radius:4px;overflow:hidden;display:flex;gap:1px;min-width:90px}
+.stack-seg{height:100%}
+.rate-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.64rem;font-family:'JetBrains Mono',monospace;font-weight:700}
+.rate-hi{background:rgba(63,185,80,.15);color:var(--a3)}
+.rate-mid{background:rgba(227,179,65,.15);color:var(--a5)}
+.rate-lo{background:rgba(247,129,102,.15);color:var(--a1)}
+.loi-matrix{width:100%;border-collapse:collapse;font-size:0.74rem}
+.loi-matrix th{padding:7px 10px;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);border-bottom:1px solid var(--bd);white-space:nowrap;text-align:center}
+.loi-matrix th:first-child{text-align:left}
+.loi-matrix td{padding:7px 10px;border-bottom:1px solid rgba(48,54,61,.4);text-align:center}
+.loi-matrix td:first-child{text-align:left;font-weight:600}
+.loi-matrix tr:last-child td{border-bottom:none}
+.loi-matrix tr:hover td{background:rgba(255,255,255,.02)}
+.cell-heat{border-radius:5px;padding:3px 8px;display:inline-block;min-width:38px;font-family:'JetBrains Mono',monospace;font-size:0.72rem}
+.sp-btn{cursor:pointer;color:var(--a2);background:none;border:none;font-family:inherit;font-size:inherit;padding:0;text-decoration:underline;text-underline-offset:2px}
+.sp-btn:hover{color:#79c0ff}
+
+/* sp loi drill panel */
+#hk-panel{display:none;position:fixed;top:0;right:0;width:500px;height:100vh;background:var(--sf);border-left:1px solid var(--bd);z-index:600;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
+#hk-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:590}
+.hkp-hdr{padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.hkp-title{font-size:1rem;font-weight:700;flex:1}
+.hkp-sub{font-size:0.7rem;color:var(--mu);margin-top:2px}
+.hkp-body{flex:1;overflow-y:auto;padding:18px 20px}
+.hkp-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.hkp-k{background:var(--s2);border-radius:9px;padding:12px 10px;text-align:center}
+.hkp-k .lbl{font-size:0.6rem;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.hkp-k .val{font-size:1.1rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+.hkp-sec{font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.hkp-sec::before{content:'';width:2px;height:10px;background:var(--a2);border-radius:2px}
+.hkp-bl{display:flex;flex-direction:column;gap:7px}
+.hkp-bi{display:flex;align-items:center;gap:8px;font-size:0.73rem}
+.hkp-bn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hkp-bt{width:90px;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;flex-shrink:0}
+.hkp-bf{height:100%;border-radius:3px}
+.hkp-bv{font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--mu);width:32px;text-align:right;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen">
+  <div class="up-logo">MediaMart</div>
+  <div class="up-sub">Warranty Dashboard v3 · Upload Excel để bắt đầu phân tích</div>
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-icon">📊</div>
+    <div class="drop-title">Kéo & thả file Excel vào đây</div>
+    <div class="drop-hint">
+      Hỗ trợ <strong>.xlsx / .xls</strong> · Xử lý hoàn toàn trên trình duyệt<br>
+      Cột bắt buộc: <code>Status, City, Nhóm hàng, Nhóm SP, Tên hãng</code><br>
+      <code>Trạng thái phiếu, Quá trình xử lý phiếu, Phân loại phiếu BH</code><br>
+      <code>Loại kho, Week (Tạo Phiếu)</code>
+    </div>
+    <button class="btn-up" onclick="event.stopPropagation();document.getElementById('file-input').click()">Chọn file Excel</button>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls">
+  <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="err-msg" id="err-msg"></div>
+  <div class="up-note">Dữ liệu không được gửi lên server — chạy 100% offline</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="hlogo">M</div>
+    <div>
+      <h1>Dashboard Phiếu Bảo Hành – MediaMart</h1>
+      <p id="hdr-sub">Đang tải...</p>
+    </div>
+    <div class="hright">
+      <span class="badge b-dg" id="bdg-pending">—</span>
+      <span class="badge b-ok" id="bdg-done">—</span>
+      <span class="badge b-fil" id="bdg-filter">—</span>
+      <button class="btn-sm" onclick="resetApp()">↩ Đổi file</button>
+    </div>
+  </header>
+
+  <!-- TAB NAV -->
+  <div id="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('tong-quan')">📊 Tổng quan</button>
+    <button class="tab-btn" onclick="switchTab('hang-khach')">🏠 Phân tích Hàng Khách</button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div id="filter-bar">
+    <span class="filter-label">Lọc theo</span>
+
+    <!-- City multi-select -->
+    <div class="city-dropdown" id="city-dd-wrap">
+      <button class="city-dd-btn" id="city-dd-btn" onclick="toggleCityDD()">
+        <span id="city-dd-label">🏙 Tất cả thành phố</span>
+        <span style="margin-left:auto;font-size:.7rem;color:var(--mu)">▾</span>
+      </button>
+      <div class="city-dd-panel" id="city-dd-panel">
+        <input class="city-search" type="text" placeholder="Tìm thành phố..." id="city-search" oninput="filterCityList()">
+        <div class="city-opt city-opt-all">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;width:100%">
+            <input type="checkbox" id="chk-all-city" onchange="toggleAllCities(this.checked)"> Tất cả thành phố
+          </label>
+        </div>
+        <div id="city-list"></div>
+      </div>
+    </div>
+
+    <!-- Status filter -->
+    <select class="filter-select" id="sel-status" onchange="applyFilters()">
+      <option value="">📋 Tất cả trạng thái</option>
+      <option value="Pending">⏳ Pending</option>
+      <option value="Xong">✅ Xong</option>
+    </select>
+
+    <!-- Nhóm hàng filter -->
+    <select class="filter-select" id="sel-nhom" onchange="applyFilters()">
+      <option value="">📦 Tất cả nhóm hàng</option>
+    </select>
+
+    <button class="btn-clear-filter" onclick="clearAllFilters()">✕ Xóa bộ lọc</button>
+  </div>
+
+  <div id="tab-tong-quan" class="tab-pane active">
+  <main>
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">📋</div><div class="kpi-lbl">Tổng phiếu</div><div class="kpi-val" id="k-total" style="color:var(--tx)">—</div><div class="kpi-sub">Đang hiển thị</div></div>
+      <div class="kpi" style="--lc:var(--dg)"><div class="kpi-ico">⏳</div><div class="kpi-lbl">Đang Pending</div><div class="kpi-val" id="k-pend" style="color:var(--a1)">—</div><div class="kpi-sub" id="k-pend-r" style="color:var(--dg)">—</div></div>
+      <div class="kpi" style="--lc:var(--a3)"><div class="kpi-ico">✅</div><div class="kpi-lbl">Đã Xong</div><div class="kpi-val" id="k-done" style="color:var(--a3)">—</div><div class="kpi-sub" id="k-done-r">—</div></div>
+      <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">🏠</div><div class="kpi-lbl">Hàng Khách</div><div class="kpi-val" id="k-khach" style="color:var(--a5)">—</div><div class="kpi-sub" id="k-khach-r">—</div></div>
+      <div class="kpi" style="--lc:var(--a2)"><div class="kpi-ico">🏭</div><div class="kpi-lbl">Hàng Kho</div><div class="kpi-val" id="k-kho" style="color:var(--a2)">—</div><div class="kpi-sub" id="k-kho-r">—</div></div>
+      <div class="kpi" style="--lc:var(--a4)"><div class="kpi-ico">🔴</div><div class="kpi-lbl">Đợi Linh Kiện</div><div class="kpi-val" id="k-lk" style="color:var(--a4)">—</div><div class="kpi-sub" id="k-lk-r">—</div></div>
+    </div>
+
+    <!-- Row 1 -->
+    <div class="sec-title">Tổng quan phiếu & tiến độ xử lý</div>
+    <div class="g3">
+      <div class="card"><div class="card-title">Trạng thái phiếu <small>Top 8</small></div><div style="height:230px"><canvas id="cTT"></canvas></div></div>
+      <div class="card"><div class="card-title">Quá trình xử lý (Pending)</div><div class="ring-wrap" id="ringProc"></div></div>
+      <div class="card"><div class="card-title">Phân loại phiếu BH <small>Top 8</small></div><div class="bar-list" id="listPL"></div></div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="sec-title">Phân tích theo Sản phẩm & Địa bàn</div>
+    <div class="g2">
+      <div class="card"><div class="card-title">Top 12 Nhóm SP đang Pending</div><div style="height:290px"><canvas id="cNSP"></canvas></div></div>
+      <div class="card"><div class="card-title">Top 12 Thành phố <small id="city-chart-lbl">— tất cả</small></div><div style="height:290px"><canvas id="cCity"></canvas></div></div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="sec-title">Phân tích theo Nhóm hàng & Thương hiệu</div>
+    <div class="g3">
+      <div class="card"><div class="card-title">Nhóm hàng (Pending)</div><div style="height:200px"><canvas id="cNH"></canvas></div></div>
+      <div class="card"><div class="card-title">Thương hiệu</div><div style="height:200px"><canvas id="cBrand"></canvas></div></div>
+      <div class="card"><div class="card-title">Loại kho & Tỷ lệ</div><div id="progBars" style="padding-top:6px"></div></div>
+    </div>
+
+    <!-- Row 4: Weekly -->
+    <div class="sec-title">Xu hướng tạo phiếu theo tuần <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a2);margin-left:8px">— click vào tuần bất kỳ để xem chi tiết</small></div>
+    <div class="gf">
+      <div class="card">
+        <div class="card-title">
+          Số phiếu theo tuần
+          <small>Click vào cột hoặc điểm để drill-down chi tiết tuần đó</small>
+        </div>
+        <div style="height:200px"><canvas id="cWeekly"></canvas></div>
+      </div>
+    </div>
+  </main>
+  </div><!-- end tab-tong-quan -->
+
+  <!-- TAB: HÀNG KHÁCH -->
+  <div id="tab-hang-khach" class="tab-pane">
+  <main>
+    <!-- HK KPIs -->
+    <div class="kpi-grid" id="hk-kpi-grid" style="margin-bottom:22px">
+      <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">🏠</div><div class="kpi-lbl">Tổng Hàng Khách</div><div class="kpi-val" id="hk-k-total" style="color:var(--a5)">—</div><div class="kpi-sub">Tổng phiếu KH mang đến</div></div>
+      <div class="kpi" style="--lc:var(--dg)"><div class="kpi-ico">⏳</div><div class="kpi-lbl">Đang Pending</div><div class="kpi-val" id="hk-k-pend" style="color:var(--a1)">—</div><div class="kpi-sub" id="hk-k-pend-r" style="color:var(--dg)">—</div></div>
+      <div class="kpi" style="--lc:var(--a3)"><div class="kpi-ico">✅</div><div class="kpi-lbl">Đã Hoàn Thành</div><div class="kpi-val" id="hk-k-done" style="color:var(--a3)">—</div><div class="kpi-sub" id="hk-k-done-r">Tỉ lệ xong</div></div>
+      <div class="kpi" style="--lc:var(--a2)"><div class="kpi-ico">🔧</div><div class="kpi-lbl">Bảo Hành</div><div class="kpi-val" id="hk-k-bh" style="color:var(--a2)">—</div><div class="kpi-sub" id="hk-k-bh-r">—</div></div>
+      <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">🏡</div><div class="kpi-lbl">BH Tại Nhà</div><div class="kpi-val" id="hk-k-bhn" style="color:var(--a5)">—</div><div class="kpi-sub" id="hk-k-bhn-r">—</div></div>
+      <div class="kpi" style="--lc:var(--a6)"><div class="kpi-ico">💰</div><div class="kpi-lbl">Tính Phí</div><div class="kpi-val" id="hk-k-phi" style="color:var(--a6)">—</div><div class="kpi-sub" id="hk-k-phi-r">—</div></div>
+    </div>
+
+    <!-- Row 1: Tiến độ xử lý + trạng thái + phân loại phiếu BH -->
+    <div class="sec-title">Tiến độ xử lý & Trạng thái</div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Quá trình xử lý phiếu</div>
+        <div class="ring-wrap" id="hk-ring-proc"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Trạng thái phiếu <small>Top 10</small></div>
+        <div style="height:240px"><canvas id="hk-cTT"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Phân loại phiếu BH</div>
+        <div class="bar-list" id="hk-listPL"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Tỉ lệ hoàn thành theo nhóm hàng + lỗi phân loại -->
+    <div class="sec-title">Tỉ lệ hoàn thành & Phân loại lỗi theo Nhóm hàng</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Tỉ lệ Pending / Xong theo Nhóm hàng</div>
+        <div style="height:240px"><canvas id="hk-cNhomRate"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ma trận Phân loại lỗi × Nhóm hàng</div>
+        <div style="overflow-x:auto">
+          <table class="loi-matrix" id="hk-loi-matrix"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Tiến độ từng sản phẩm (bảng có thể click) -->
+    <div class="sec-title">Tiến độ xử lý từng Sản phẩm <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a2);margin-left:8px">— click tên SP để xem chi tiết lỗi</small></div>
+    <div class="gf">
+      <div class="card">
+        <div class="card-title">Top 15 Nhóm SP – Hàng Khách <small>Pending / Xong / Tỉ lệ hoàn thành</small></div>
+        <div style="overflow-x:auto">
+          <table class="sp-table" id="hk-sp-table">
+            <thead>
+              <tr>
+                <th>Nhóm SP</th>
+                <th style="text-align:center">Tổng</th>
+                <th style="text-align:center">Pending</th>
+                <th style="text-align:center">Xong</th>
+                <th style="min-width:110px">Tỉ lệ xong</th>
+                <th style="min-width:140px">Trực quan</th>
+              </tr>
+            </thead>
+            <tbody id="hk-sp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Top mã lỗi theo nhóm hàng (3 cột) -->
+    <div class="sec-title">Top mã lỗi chi tiết theo Nhóm hàng</div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Gia Dụng – Top mã lỗi</div>
+        <div style="height:270px"><canvas id="hk-cLoiGD"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Điện Lạnh – Top mã lỗi</div>
+        <div style="height:270px"><canvas id="hk-cLoiDL"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Điện Tử – Top mã lỗi</div>
+        <div style="height:270px"><canvas id="hk-cLoiDT"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Row 5: Tỉ lệ loại lỗi donut + Lỗi theo tháng -->
+    <div class="sec-title">Phân bổ loại lỗi tổng thể</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Phân loại lỗi – Hàng Khách</div>
+        <div style="height:250px"><canvas id="hk-cLoiAll"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Thành phố – Hàng Khách Pending</div>
+        <div style="height:250px"><canvas id="hk-cCity"></canvas></div>
+      </div>
+    </div>
+
+  </main>
+  </div><!-- end tab-hang-khach -->
+
+  <footer id="ftr">MediaMart Warranty Dashboard v3</footer>
+</div>
+
+<!-- HK OVERLAY -->
+<div id="hk-overlay" onclick="closeHkPanel()"></div>
+
+<!-- HK SP DRILL PANEL -->
+<div id="hk-panel">
+  <div class="hkp-hdr">
+    <div>
+      <div class="hkp-title" id="hkp-title">Chi tiết sản phẩm</div>
+      <div class="hkp-sub" id="hkp-sub">Hàng Khách</div>
+    </div>
+    <button class="btn-close" onclick="closeHkPanel()">✕</button>
+  </div>
+  <div class="hkp-body">
+    <div class="hkp-kpis" id="hkp-kpis"></div>
+    <div class="hkp-sec">Phân loại lỗi</div>
+    <div class="hkp-bl" id="hkp-loi"></div>
+    <div class="hkp-sec">Mã lỗi chi tiết (Top 10)</div>
+    <div class="hkp-bl" id="hkp-ma-loi"></div>
+    <div class="hkp-sec">Trạng thái phiếu</div>
+    <div class="hkp-bl" id="hkp-tt"></div>
+    <div class="hkp-sec">Quá trình xử lý</div>
+    <div class="hkp-bl" id="hkp-proc"></div>
+    <div class="hkp-sec">Nhóm lỗi – Biểu đồ</div>
+    <div style="height:180px"><canvas id="hkp-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" onclick="closeWeekPanel()"></div>
+
+<!-- WEEKLY DRILL-DOWN PANEL -->
+<div id="weekly-panel">
+  <div class="wp-header">
+    <div>
+      <div class="wp-title" id="wp-title">Chi tiết tuần —</div>
+      <div class="wp-sub" id="wp-sub">0 phiếu</div>
+    </div>
+    <button class="btn-close" onclick="closeWeekPanel()">✕</button>
+  </div>
+  <div class="wp-body">
+    <!-- week navigator -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:0.66rem;color:var(--mu);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em">Chuyển tuần nhanh</div>
+      <div class="week-nav" id="week-nav"></div>
+    </div>
+    <!-- KPIs -->
+    <div class="wp-kpi-row" id="wp-kpis"></div>
+    <!-- Top SP -->
+    <div class="wp-section">Top sản phẩm</div>
+    <div class="wp-bar-list" id="wp-sp"></div>
+    <!-- Top City -->
+    <div class="wp-section">Thành phố</div>
+    <div class="wp-bar-list" id="wp-city"></div>
+    <!-- Trạng thái -->
+    <div class="wp-section">Trạng thái phiếu</div>
+    <div class="wp-bar-list" id="wp-tt"></div>
+    <!-- Phân loại -->
+    <div class="wp-section">Phân loại phiếu BH</div>
+    <div class="wp-bar-list" id="wp-pl"></div>
+    <!-- Nhóm hàng donut mini -->
+    <div class="wp-section">Nhóm hàng</div>
+    <div style="height:160px;margin-bottom:10px"><canvas id="wp-nh-chart"></canvas></div>
+  </div>
+</div>
+
+<script>
+const C = ['#f78166','#58a6ff','#3fb950','#e3b341','#d2a8ff','#ffa657','#79c0ff','#56d364','#ff9580','#a5d6ff','#ffe08a','#b9f2cc'];
+Chart.defaults.color='#7d8590';
+Chart.defaults.font.family="'Be Vietnam Pro',sans-serif";
+Chart.defaults.font.size=11;
+
+let ALL_ROWS=[], FILT_ROWS=[], charts={}, wpNhChart=null;
+let selCities=new Set(), allCities=[];
+
+const fmt=n=>n.toLocaleString('vi-VN');
+const pct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'0%';
+function countBy(arr,key,top=0){
+  const m={};
+  arr.forEach(r=>{const v=(r[key]||'').toString().trim()||'(Trống)';m[v]=(m[v]||0)+1});
+  const s=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  return top?s.slice(0,top):s;
+}
+function cleanBrand(v){
+  const s=(v||'').toString().toUpperCase().trim();
+  if(s.includes('COEX'))return'COEX';
+  if(s.includes('ROLER'))return'ROLER';
+  return s||'Khác';
+}
+
+function destroyCharts(){Object.values(charts).forEach(c=>c&&c.destroy());charts={}}
+function mkBar(id,labels,vals,horiz=false){
+  const ctx=document.getElementById(id).getContext('2d');
+  return new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>C[i%C.length]),borderRadius:5,borderSkipped:false}]},
+    options:{
+      indexAxis:horiz?'y':'x',responsive:true,maintainAspectRatio:false,
+      onClick(e,els){if(id==='cWeekly'&&els.length){openWeekPanel(labels[els[0].index].replace('Tuần ',''))}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${fmt(c.raw)} phiếu`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:!horiz},border:{display:false},ticks:{font:{size:11}}}}
+    }
+  });
+}
+function mkDonut(id,labels,vals,colors){
+  const ctx=document.getElementById(id).getContext('2d');
+  return new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:colors||C,borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyleWidth:7}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+  });
+}
+function mkLine(id,labels,vals,clickCb){
+  const ctx=document.getElementById(id).getContext('2d');
+  return new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data:vals,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.08)',tension:0.4,fill:true,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:'#58a6ff',pointBorderColor:'#161b22',pointBorderWidth:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      onClick(e,els){if(els.length&&clickCb)clickCb(labels[els[0].index])},
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${t[0].label}`,label:c=>`  ${fmt(c.raw)} phiếu — click để xem chi tiết`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false},ticks:{maxTicksLimit:20}},y:{grid:{color:'#1c2230'},border:{display:false}}}
+    }
+  });
+}
+
+function renderRing(cid,data){
+  const total=data.reduce((s,d)=>s+d[1],0);
+  const top=data[0];
+  const topPct=(top[1]/total*100).toFixed(1);
+  const circ=2*Math.PI*46;
+  const offset=circ*(1-parseFloat(topPct)/100);
+  document.getElementById(cid).innerHTML=`
+    <div class="ring-cnt">
+      <svg class="ring-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#1c2230" stroke-width="12"/>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="${C[0]}" stroke-width="12"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 50 50)"/>
+      </svg>
+      <div class="ring-center"><div class="ring-pct" style="color:${C[0]}">${topPct}%</div><div class="ring-lbl">${top[0].length>13?top[0].slice(0,13)+'…':top[0]}</div></div>
+    </div>
+    <div class="legend">${data.map((d,i)=>`
+      <div class="leg-item"><span class="leg-dot" style="background:${C[i%C.length]}"></span>
+      <span style="max-width:115px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d[0]}">${d[0]}</span>
+      <span class="leg-cnt">${fmt(d[1])}</span></div>`).join('')}
+    </div>`;
+}
+function renderBarList(cid,data){
+  const max=data[0]?data[0][1]:1;
+  document.getElementById(cid).innerHTML=data.map(([n,v],i)=>`
+    <div class="bar-item"><span class="bar-name" title="${n}">${n}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(v/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+    <span class="bar-val">${fmt(v)}</span></div>`).join('');
+}
+function renderWpBarList(cid,data){
+  const max=data[0]?data[0][1]:1;
+  document.getElementById(cid).innerHTML=data.map(([n,v],i)=>`
+    <div class="wp-bar-item"><span class="wp-bar-name" title="${n}">${n}</span>
+    <div class="wp-bar-track"><div class="wp-bar-fill" style="width:${(v/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+    <span class="wp-bar-val">${fmt(v)}</span></div>`).join('');
+}
+function renderProgBars(rows){
+  document.getElementById('progBars').innerHTML=rows.map(({lbl,val,p,color})=>`
+    <div class="prog-row">
+      <div class="prog-header"><span>${lbl}</span><span class="prog-val">${fmt(val)} <small style="color:var(--mu)">(${p})</small></span></div>
+      <div class="prog-bar-t"><div class="prog-fill-t" style="width:${p};background:${color}"></div></div>
+    </div>`).join('');
+}
+
+/* ═══ CITY DROPDOWN ═══ */
+function buildCityDD(){
+  allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').toString().trim()).filter(Boolean))].sort();
+  selCities=new Set(allCities);
+  const list=document.getElementById('city-list');
+  list.innerHTML=allCities.map(c=>`
+    <div class="city-opt" data-city="${c}">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;width:100%">
+        <input type="checkbox" class="chk-city" value="${c}" checked onchange="onCityCheck()"> ${c}
+      </label>
+    </div>`).join('');
+  document.getElementById('chk-all-city').checked=true;
+}
+function filterCityList(){
+  const q=document.getElementById('city-search').value.toLowerCase();
+  document.querySelectorAll('.city-opt[data-city]').forEach(el=>{
+    el.style.display=el.dataset.city.toLowerCase().includes(q)?'':'none';
+  });
+}
+function toggleCityDD(){
+  document.getElementById('city-dd-panel').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('city-dd-wrap').contains(e.target))
+    document.getElementById('city-dd-panel').classList.remove('open');
+});
+function onCityCheck(){
+  const checks=document.querySelectorAll('.chk-city');
+  selCities=new Set([...checks].filter(c=>c.checked).map(c=>c.value));
+  const allChecked=selCities.size===allCities.length;
+  document.getElementById('chk-all-city').checked=allChecked;
+  document.getElementById('chk-all-city').indeterminate=!allChecked&&selCities.size>0;
+  updateCityLabel();
+  applyFilters();
+}
+function toggleAllCities(checked){
+  document.querySelectorAll('.chk-city').forEach(c=>{c.checked=checked});
+  selCities=checked?new Set(allCities):new Set();
+  updateCityLabel();
+  applyFilters();
+}
+function updateCityLabel(){
+  const el=document.getElementById('city-dd-label');
+  if(selCities.size===allCities.length) el.textContent='🏙 Tất cả thành phố';
+  else if(selCities.size===0) el.textContent='🏙 Không chọn';
+  else if(selCities.size<=3) el.textContent='🏙 '+[...selCities].join(', ');
+  else el.textContent=`🏙 ${selCities.size} thành phố`;
+}
+
+/* ═══ FILTERS ═══ */
+function applyFilters(){
+  const status=document.getElementById('sel-status').value;
+  const nhom=document.getElementById('sel-nhom').value;
+  const cityFiltered=selCities.size>0&&selCities.size<allCities.length;
+
+  FILT_ROWS=ALL_ROWS.filter(r=>{
+    const city=(r['City']||'').toString().trim();
+    const okCity=selCities.size===0||selCities.has(city);
+    const okStatus=!status||(r['Status']||'').trim()===status;
+    const okNhom=!nhom||(r['Nhóm hàng']||'').trim()===nhom;
+    return okCity&&okStatus&&okNhom;
+  });
+
+  // badge
+  const hasFilter=cityFiltered||status||nhom;
+  const bdg=document.getElementById('bdg-filter');
+  if(hasFilter){
+    const parts=[];
+    if(cityFiltered)parts.push(`${selCities.size} TP`);
+    if(status)parts.push(status);
+    if(nhom)parts.push(nhom);
+    bdg.textContent='🔍 '+parts.join(' · ');
+    bdg.style.display='';
+  } else { bdg.style.display='none'; }
+
+  renderDashboard(FILT_ROWS);
+}
+function clearAllFilters(){
+  document.getElementById('sel-status').value='';
+  document.getElementById('sel-nhom').value='';
+  document.querySelectorAll('.chk-city').forEach(c=>c.checked=true);
+  selCities=new Set(allCities);
+  document.getElementById('chk-all-city').checked=true;
+  updateCityLabel();
+  applyFilters();
+}
+
+/* ═══ RENDER DASHBOARD ═══ */
+function renderDashboard(rows){
+  destroyCharts();
+  if(wpNhChart){wpNhChart.destroy();wpNhChart=null;}
+
+  const total=rows.length;
+  const pending=rows.filter(r=>(r['Status']||'').trim()==='Pending');
+  const done=rows.filter(r=>(r['Status']||'').trim()==='Xong');
+  const khach=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách');
+  const kho=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng kho');
+  const lk=rows.filter(r=>(r['Trạng thái phiếu']||'').includes('Đợi linh kiện'));
+
+  document.getElementById('k-total').textContent=fmt(total);
+  document.getElementById('k-pend').textContent=fmt(pending.length);
+  document.getElementById('k-pend-r').textContent=pct(pending.length,total)+' tổng phiếu';
+  document.getElementById('k-done').textContent=fmt(done.length);
+  document.getElementById('k-done-r').textContent=pct(done.length,total);
+  document.getElementById('k-khach').textContent=fmt(khach.length);
+  document.getElementById('k-khach-r').textContent=pct(khach.length,total);
+  document.getElementById('k-kho').textContent=fmt(kho.length);
+  document.getElementById('k-kho-r').textContent=pct(kho.length,total);
+  document.getElementById('k-lk').textContent=fmt(lk.length);
+  document.getElementById('k-lk-r').textContent=pct(lk.length,pending.length)+' Pending';
+  document.getElementById('bdg-pending').textContent=`⚠ ${pct(pending.length,total)} Pending`;
+  document.getElementById('bdg-done').textContent=`✓ ${pct(done.length,total)} Xong`;
+
+  const tt=countBy(rows,'Trạng thái phiếu',8);
+  charts.tt=mkBar('cTT',tt.map(d=>d[0]),tt.map(d=>d[1]),true);
+
+  const proc=countBy(pending,'Quá trình xử lý phiếu',4);
+  if(proc.length) renderRing('ringProc',proc);
+
+  const plbh=countBy(pending,'Phân loại phiếu BH',8);
+  renderBarList('listPL',plbh);
+
+  const nsp=countBy(pending,'Nhóm SP',12);
+  charts.nsp=mkBar('cNSP',nsp.map(d=>d[0]),nsp.map(d=>d[1]),true);
+
+  const cityData=countBy(pending,'City',12);
+  const isFiltered=selCities.size<allCities.length&&selCities.size>0;
+  document.getElementById('city-chart-lbl').textContent=isFiltered?`${selCities.size} TP được chọn`:'tất cả';
+  const cityColors=cityData.map((_,i)=>i===0&&!isFiltered?'#f85149':C[i%C.length]+'99');
+  const ctxC=document.getElementById('cCity').getContext('2d');
+  charts.city=new Chart(ctxC,{
+    type:'bar',
+    data:{labels:cityData.map(d=>d[0]),datasets:[{data:cityData.map(d=>d[1]),backgroundColor:cityColors,borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${fmt(c.raw)} phiếu`}}},scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false}}}}
+  });
+
+  const nh=countBy(pending,'Nhóm hàng',6);
+  charts.nh=mkDonut('cNH',nh.map(d=>d[0]),nh.map(d=>d[1]),[...C]);
+
+  const brandRaw=rows.map(r=>cleanBrand(r['Tên hãng']));
+  const bm={};brandRaw.forEach(b=>bm[b]=(bm[b]||0)+1);
+  const bd=Object.entries(bm).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  charts.brand=mkDonut('cBrand',bd.map(d=>d[0]),bd.map(d=>d[1]),['#d2a8ff','#79c0ff','#7d8590','#ffa657','#f78166']);
+
+  renderProgBars([
+    {lbl:'Hàng kho',val:kho.length,p:pct(kho.length,total),color:'#58a6ff'},
+    {lbl:'Hàng khách',val:khach.length,p:pct(khach.length,total),color:'#e3b341'},
+    {lbl:'Pending / Tổng',val:pending.length,p:pct(pending.length,total),color:'#f78166'},
+    {lbl:'Xong / Tổng',val:done.length,p:pct(done.length,total),color:'#3fb950'},
+  ]);
+
+  // Weekly with click drill-down
+  const wm={};
+  rows.forEach(r=>{
+    const w=parseInt(r['Week (Tạo Phiếu)']);
+    if(!isNaN(w))wm[w]=(wm[w]||0)+1;
+  });
+  const weeks=Object.keys(wm).map(Number).sort((a,b)=>a-b);
+  charts.weekly=mkLine('cWeekly',weeks.map(w=>`Tuần ${w}`),weeks.map(w=>wm[w]),
+    lbl=>openWeekPanel(lbl.replace('Tuần ','')));
+}
+
+/* ═══ WEEKLY DRILL-DOWN ═══ */
+let currentWeek=null;
+function openWeekPanel(weekStr){
+  currentWeek=parseInt(weekStr);
+  document.getElementById('overlay').style.display='block';
+  document.getElementById('weekly-panel').style.display='flex';
+
+  // Build week nav buttons
+  const wm={};
+  FILT_ROWS.forEach(r=>{const w=parseInt(r['Week (Tạo Phiếu)']);if(!isNaN(w))wm[w]=(wm[w]||0)+1;});
+  const allWeeks=Object.keys(wm).map(Number).sort((a,b)=>a-b);
+  document.getElementById('week-nav').innerHTML=allWeeks.map(w=>
+    `<button class="wk-btn${w===currentWeek?' sel':''}" onclick="openWeekPanel(${w})">${w}</button>`).join('');
+
+  renderWeekPanel(currentWeek);
+}
+function renderWeekPanel(week){
+  const wr=FILT_ROWS.filter(r=>parseInt(r['Week (Tạo Phiếu)'])===week);
+  const pend=wr.filter(r=>(r['Status']||'').trim()==='Pending');
+  const done=wr.filter(r=>(r['Status']||'').trim()==='Xong');
+
+  document.getElementById('wp-title').textContent=`Chi tiết Tuần ${week}`;
+  document.getElementById('wp-sub').textContent=`${fmt(wr.length)} phiếu · ${fmt(pend.length)} Pending · ${fmt(done.length)} Xong`;
+
+  document.getElementById('wp-kpis').innerHTML=`
+    <div class="wp-kpi"><div class="lbl">Tổng phiếu</div><div class="val" style="color:var(--tx)">${fmt(wr.length)}</div></div>
+    <div class="wp-kpi"><div class="lbl">Pending</div><div class="val" style="color:var(--a1)">${fmt(pend.length)}</div></div>
+    <div class="wp-kpi"><div class="lbl">Xong</div><div class="val" style="color:var(--a3)">${fmt(done.length)}</div></div>`;
+
+  renderWpBarList('wp-sp',countBy(wr,'Nhóm SP',8));
+  renderWpBarList('wp-city',countBy(wr,'City',8));
+  renderWpBarList('wp-tt',countBy(wr,'Trạng thái phiếu',8));
+  renderWpBarList('wp-pl',countBy(wr,'Phân loại phiếu BH',6));
+
+  if(wpNhChart){wpNhChart.destroy();wpNhChart=null;}
+  const nh=countBy(wr,'Nhóm hàng',5);
+  if(nh.length){
+    const ctx=document.getElementById('wp-nh-chart').getContext('2d');
+    wpNhChart=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:nh.map(d=>d[0]),datasets:[{data:nh.map(d=>d[1]),backgroundColor:[...C],borderColor:'#161b22',borderWidth:2,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{padding:9,usePointStyle:true,pointStyleWidth:6,font:{size:10}}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+    });
+  }
+
+  // update nav highlight
+  document.querySelectorAll('.wk-btn').forEach(b=>{
+    b.classList.toggle('sel',parseInt(b.textContent)===week);
+  });
+}
+function closeWeekPanel(){
+  document.getElementById('weekly-panel').style.display='none';
+  document.getElementById('overlay').style.display='none';
+}
+
+/* ═══ BOOTSTRAP ═══ */
+function initDashboard(rows,filename){
+  ALL_ROWS=rows;
+  buildCityDD();
+
+  // Nhóm hàng select
+  const nhoms=[...new Set(rows.map(r=>(r['Nhóm hàng']||'').trim()).filter(Boolean))].sort();
+  const sel=document.getElementById('sel-nhom');
+  nhoms.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent='📦 '+n;sel.appendChild(o);});
+
+  document.getElementById('tab-nav').style.display='flex';
+  document.getElementById('filter-bar').style.display='flex';
+  document.getElementById('upload-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('hdr-sub').textContent=`Dữ liệu từ ${filename} · ${fmt(rows.length)} phiếu · v3 với phân tích Hàng Khách`;
+  document.getElementById('ftr').textContent=`MediaMart Warranty Dashboard v3 · ${filename} · ${fmt(rows.length)} phiếu`;
+
+  FILT_ROWS=[...rows];
+  renderDashboard(FILT_ROWS);
+  renderHangKhach(rows);
+}
+
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls'].includes(ext)){showErr('Chỉ hỗ trợ .xlsx hoặc .xls');return;}
+  document.getElementById('err-msg').style.display='none';
+  const pb=document.getElementById('prog-bar'),pf=document.getElementById('prog-fill');
+  pb.style.display='block';pf.style.width='20%';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      pf.style.width='60%';
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      pf.style.width='80%';
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      pf.style.width='100%';
+      if(!rows.length){showErr('Sheet trống');pb.style.display='none';return;}
+      setTimeout(()=>{pb.style.display='none';initDashboard(rows,file.name);},300);
+    }catch(err){pb.style.display='none';showErr('Lỗi: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function showErr(m){const e=document.getElementById('err-msg');e.textContent=m;e.style.display='block';}
+function resetApp(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('upload-screen').style.display='flex';
+  document.getElementById('filter-bar').style.display='none';
+  document.getElementById('tab-nav').style.display='none';
+  closeWeekPanel();
+  closeHkPanel();
+  destroyCharts();
+  destroyHkCharts();
+  if(wpNhChart){wpNhChart.destroy();wpNhChart=null;}
+  document.getElementById('file-input').value='';
+  document.getElementById('sel-nhom').innerHTML='<option value="">📦 Tất cả nhóm hàng</option>';
+  ALL_ROWS=[];FILT_ROWS=[];
+  switchTab('tong-quan');
+}
+
+
+/* ═══ TAB SWITCHING ═══ */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const tabs=['tong-quan','hang-khach'];
+    b.classList.toggle('active', tabs[i]===name);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p=>{
+    p.classList.toggle('active', p.id==='tab-'+name);
+  });
+  // Filter bar only on tong-quan
+  document.getElementById('filter-bar').style.display = name==='tong-quan'?'flex':'none';
+}
+
+/* ═══ HÀNG KHÁCH FUNCTIONS ═══ */
+let hkCharts={}, hkpChart=null;
+
+function destroyHkCharts(){Object.values(hkCharts).forEach(c=>c&&c.destroy());hkCharts={};}
+
+function shortMaLoi(s){
+  s=String(s||'');
+  const dot=s.indexOf('.');
+  if(dot>-1) return s.slice(dot+1).trim().slice(0,52);
+  return s.slice(0,52);
+}
+
+function hkBarH(id,labels,vals,colors){
+  const ctx=document.getElementById(id).getContext('2d');
+  return new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{data:vals,backgroundColor:colors||labels.map((_,i)=>C[i%C.length]),borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${fmt(c.raw)} phiếu`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10},maxTicksLimit:12}}}}
+  });
+}
+
+function renderHkPanel(spName, hkRows){
+  const rows=hkRows.filter(r=>(r['Nhóm SP']||'').trim()===spName);
+  const pend=rows.filter(r=>(r['Status']||'').trim()==='Pending');
+  const done=rows.filter(r=>(r['Status']||'').trim()==='Xong');
+
+  document.getElementById('hkp-title').textContent=spName;
+  document.getElementById('hkp-sub').textContent=`${fmt(rows.length)} phiếu · ${fmt(pend.length)} Pending · ${fmt(done.length)} Xong · Tỉ lệ: ${pct(done.length,rows.length)}`;
+
+  document.getElementById('hkp-kpis').innerHTML=`
+    <div class="hkp-k"><div class="lbl">Tổng</div><div class="val" style="color:var(--tx)">${fmt(rows.length)}</div></div>
+    <div class="hkp-k"><div class="lbl">Pending</div><div class="val" style="color:var(--a1)">${fmt(pend.length)}</div></div>
+    <div class="hkp-k"><div class="lbl">Xong</div><div class="val" style="color:var(--a3)">${fmt(done.length)}</div></div>`;
+
+  function mkHkpList(id, data){
+    const max=data[0]?data[0][1]:1;
+    document.getElementById(id).innerHTML=data.map(([n,v],i)=>`
+      <div class="hkp-bi">
+        <span class="hkp-bn" title="${n}">${n}</span>
+        <div class="hkp-bt"><div class="hkp-bf" style="width:${(v/max*100).toFixed(1)}%;background:${C[i%C.length]}"></div></div>
+        <span class="hkp-bv">${fmt(v)}</span>
+      </div>`).join('');
+  }
+
+  mkHkpList('hkp-loi', countBy(rows,'Phân loại lỗi'));
+  const maLoi=countBy(rows,'Mã lỗi 1',10).map(([k,v])=>[shortMaLoi(k),v]);
+  mkHkpList('hkp-ma-loi', maLoi);
+  mkHkpList('hkp-tt', countBy(rows,'Trạng thái phiếu',8));
+  mkHkpList('hkp-proc', countBy(rows,'Quá trình xử lý phiếu'));
+
+  if(hkpChart){hkpChart.destroy();hkpChart=null;}
+  const loiData=countBy(rows,'Phân loại lỗi',7);
+  if(loiData.length){
+    const ctx=document.getElementById('hkp-chart').getContext('2d');
+    hkpChart=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:loiData.map(d=>d[0]),datasets:[{data:loiData.map(d=>d[1]),backgroundColor:[...C],borderColor:'#161b22',borderWidth:2,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+        plugins:{legend:{position:'right',labels:{padding:8,usePointStyle:true,pointStyleWidth:6,font:{size:10}}},
+          tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+    });
+  }
+
+  document.getElementById('hk-overlay').style.display='block';
+  document.getElementById('hk-panel').style.display='flex';
+}
+
+function closeHkPanel(){
+  document.getElementById('hk-panel').style.display='none';
+  document.getElementById('hk-overlay').style.display='none';
+  if(hkpChart){hkpChart.destroy();hkpChart=null;}
+}
+
+function renderHangKhach(allRows){
+  destroyHkCharts();
+  const hk=allRows.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách');
+  const pend=hk.filter(r=>(r['Status']||'').trim()==='Pending');
+  const done=hk.filter(r=>(r['Status']||'').trim()==='Xong');
+  const bh=hk.filter(r=>(r['Phân loại phiếu BH']||'').trim()==='Bảo hành');
+  const bhn=hk.filter(r=>(r['Phân loại phiếu BH']||'').trim()==='Bảo hành tại nhà');
+  const phi=hk.filter(r=>['Tính phí','Tính phí tại nhà'].includes((r['Phân loại phiếu BH']||'').trim()));
+  const total=hk.length;
+
+  // KPIs
+  document.getElementById('hk-k-total').textContent=fmt(total);
+  document.getElementById('hk-k-pend').textContent=fmt(pend.length);
+  document.getElementById('hk-k-pend-r').textContent=pct(pend.length,total)+' tổng HK';
+  document.getElementById('hk-k-done').textContent=fmt(done.length);
+  document.getElementById('hk-k-done-r').textContent=pct(done.length,total);
+  document.getElementById('hk-k-bh').textContent=fmt(bh.length);
+  document.getElementById('hk-k-bh-r').textContent=pct(bh.length,total);
+  document.getElementById('hk-k-bhn').textContent=fmt(bhn.length);
+  document.getElementById('hk-k-bhn-r').textContent=pct(bhn.length,total);
+  document.getElementById('hk-k-phi').textContent=fmt(phi.length);
+  document.getElementById('hk-k-phi-r').textContent=pct(phi.length,total);
+
+  // Tiến độ xử lý ring
+  const proc=countBy(hk,'Quá trình xử lý phiếu',5);
+  if(proc.length) renderRing('hk-ring-proc', proc);
+
+  // Trạng thái
+  const tt=countBy(hk,'Trạng thái phiếu',10);
+  hkCharts.tt=hkBarH('hk-cTT', tt.map(d=>d[0]), tt.map(d=>d[1]));
+
+  // Phân loại phiếu BH bar list
+  const plbh=countBy(hk,'Phân loại phiếu BH',8);
+  renderBarList('hk-listPL', plbh);
+
+  // Tỉ lệ theo nhóm hàng – stacked bar
+  const nhomGroups=['Gia Dụng','Điện Lạnh','Điện Tử'];
+  const nhomPend=[], nhomDone=[], nhomLabels=[];
+  nhomGroups.forEach(nh=>{
+    const sub=hk.filter(r=>(r['Nhóm hàng']||'').trim()===nh);
+    if(sub.length){
+      nhomLabels.push(nh);
+      nhomPend.push(sub.filter(r=>(r['Status']||'').trim()==='Pending').length);
+      nhomDone.push(sub.filter(r=>(r['Status']||'').trim()==='Xong').length);
+    }
+  });
+  const ctxNR=document.getElementById('hk-cNhomRate').getContext('2d');
+  hkCharts.nhomRate=new Chart(ctxNR,{
+    type:'bar',
+    data:{labels:nhomLabels,datasets:[
+      {label:'Pending',data:nhomPend,backgroundColor:'#f7816699',borderRadius:4,borderSkipped:false},
+      {label:'Xong',data:nhomDone,backgroundColor:'#3fb95099',borderRadius:4,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{padding:12,usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)} (${pct(c.raw,nhomPend[c.dataIndex]+nhomDone[c.dataIndex])})`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false},stacked:false},y:{grid:{color:'#1c2230'},border:{display:false}}}}
+  });
+
+  // Ma trận lỗi × nhóm hàng
+  const loaiLoi=countBy(hk,'Phân loại lỗi').filter(([k])=>k!=='Lỗi khác'&&k!=='(Trống)').map(d=>d[0]);
+  loaiLoi.push('Lỗi khác');
+  const nhomHangAll=[...new Set(hk.map(r=>(r['Nhóm hàng']||'').trim()).filter(Boolean))].sort();
+  // count
+  const matData={};
+  nhomHangAll.forEach(nh=>{
+    matData[nh]={};
+    loaiLoi.forEach(ll=>matData[nh][ll]=0);
+  });
+  hk.forEach(r=>{
+    const nh=(r['Nhóm hàng']||'').trim();
+    const ll=(r['Phân loại lỗi']||'').trim()||'Lỗi khác';
+    if(matData[nh]&&matData[nh][ll]!==undefined) matData[nh][ll]++;
+    else if(matData[nh]) matData[nh]['Lỗi khác']=(matData[nh]['Lỗi khác']||0)+1;
+  });
+  // max for heat
+  let matMax=0;
+  nhomHangAll.forEach(nh=>loaiLoi.forEach(ll=>{if(matData[nh][ll]>matMax)matMax=matData[nh][ll];}));
+  function heatColor(v,max){
+    if(!v)return'transparent';
+    const r=v/max;
+    if(r>0.6)return'rgba(247,129,102,0.85)';
+    if(r>0.3)return'rgba(227,179,65,0.7)';
+    if(r>0.1)return'rgba(88,166,255,0.55)';
+    return'rgba(88,166,255,0.2)';
+  }
+  const tbl=document.getElementById('hk-loi-matrix');
+  tbl.innerHTML=`<thead><tr><th>Nhóm hàng</th>${loaiLoi.map(l=>`<th>${l}</th>`).join('')}<th>Tổng</th></tr></thead>
+  <tbody>${nhomHangAll.map(nh=>{
+    const rowTotal=loaiLoi.reduce((s,ll)=>s+(matData[nh][ll]||0),0);
+    return`<tr><td>${nh}</td>${loaiLoi.map(ll=>{
+      const v=matData[nh][ll]||0;
+      return`<td><span class="cell-heat" style="background:${heatColor(v,matMax)}">${v||''}</span></td>`;
+    }).join('')}<td style="font-weight:700;font-family:'JetBrains Mono',monospace">${fmt(rowTotal)}</td></tr>`;
+  }).join('')}</tbody>`;
+
+  // SP tiến độ table
+  const spList=countBy(hk,'Nhóm SP',15);
+  const tbody=document.getElementById('hk-sp-tbody');
+  tbody.innerHTML=spList.map(([sp,t])=>{
+    const spPend=hk.filter(r=>(r['Nhóm SP']||'').trim()===sp&&(r['Status']||'').trim()==='Pending').length;
+    const spDone=hk.filter(r=>(r['Nhóm SP']||'').trim()===sp&&(r['Status']||'').trim()==='Xong').length;
+    const rate=t?spDone/t*100:0;
+    const rateStr=rate.toFixed(1)+'%';
+    const cls=rate>=40?'rate-hi':rate>=20?'rate-mid':'rate-lo';
+    const pendW=(spPend/t*100).toFixed(1);
+    const doneW=(spDone/t*100).toFixed(1);
+    return`<tr>
+      <td><button class="sp-btn" onclick="renderHkPanel('${sp.replace(/'/g,"\\'")}',ALL_ROWS)">${sp}</button></td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace">${fmt(t)}</td>
+      <td style="text-align:center;color:var(--a1);font-family:'JetBrains Mono',monospace">${fmt(spPend)}</td>
+      <td style="text-align:center;color:var(--a3);font-family:'JetBrains Mono',monospace">${fmt(spDone)}</td>
+      <td><span class="rate-badge ${cls}">${rateStr}</span></td>
+      <td><div class="stack-bar">
+        <div class="stack-seg" style="width:${pendW}%;background:#f7816688"></div>
+        <div class="stack-seg" style="width:${doneW}%;background:#3fb95088"></div>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // Top mã lỗi theo nhóm hàng
+  ['Gia Dụng','Điện Lạnh','Điện Tử'].forEach((nh,idx)=>{
+    const canvasId=['hk-cLoiGD','hk-cLoiDL','hk-cLoiDT'][idx];
+    const sub=hk.filter(r=>(r['Nhóm hàng']||'').trim()===nh);
+    const loiData=countBy(sub,'Mã lỗi 1',8).map(([k,v])=>[shortMaLoi(k),v]);
+    hkCharts['loi'+idx]=hkBarH(canvasId, loiData.map(d=>d[0]), loiData.map(d=>d[1]));
+  });
+
+  // Lỗi phân loại donut
+  const loiAll=countBy(hk,'Phân loại lỗi',8);
+  const ctxLA=document.getElementById('hk-cLoiAll').getContext('2d');
+  hkCharts.loiAll=new Chart(ctxLA,{
+    type:'doughnut',
+    data:{labels:loiAll.map(d=>d[0]),datasets:[{data:loiAll.map(d=>d[1]),backgroundColor:[...C],borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}
+  });
+
+  // City pending hàng khách
+  const cityHK=countBy(pend,'City',12);
+  hkCharts.city=hkBarH('hk-cCity', cityHK.map(d=>d[0]), cityHK.map(d=>d[1]), cityHK.map((_,i)=>i===0?'#f85149':C[i%C.length]+'99'));
+}
+
+document.getElementById('file-input').addEventListener('change',e=>handleFile(e.target.files[0]));
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+</script>
+</body>
+</html>
