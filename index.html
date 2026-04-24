@@ -265,41 +265,47 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
   </div>
 
   <!-- Google Sheets pane -->
-  <div class="src-pane" id="src-gsheet" style="width:520px">
-    <div class="card" style="background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:24px">
-      <div style="font-size:0.88rem;font-weight:700;margin-bottom:6px">🔗 Kết nối Google Sheets</div>
-      <div style="font-size:0.76rem;color:var(--mu);margin-bottom:16px;line-height:1.6">
-        Nhập URL Google Sheet đã được <strong>publish to web</strong> hoặc dùng Apps Script Web App URL.<br>
-        Dashboard sẽ tự động cập nhật khi data thay đổi.
+  <div class="src-pane" id="src-gsheet" style="width:560px">
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:24px">
+      <div style="font-size:0.88rem;font-weight:700;margin-bottom:4px">🔗 Kết nối Google Sheets</div>
+      <div style="font-size:0.74rem;color:var(--mu);margin-bottom:18px;line-height:1.6">
+        Dashboard sẽ lấy data từ Google Sheets qua Apps Script và tự động cập nhật khi có thay đổi.
       </div>
 
-      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:6px">Apps Script Web App URL</div>
-      <div class="gs-input-wrap">
+      <!-- Method A: Apps Script (recommended) -->
+      <div style="background:var(--s2);border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="background:var(--a3);color:#0d1117;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:10px">KHUYẾN NGHỊ</span>
+          <span style="font-size:0.8rem;font-weight:700">Phương thức A — Apps Script</span>
+        </div>
         <input class="gs-url-input" id="gs-url-input" type="text"
           placeholder="https://script.google.com/macros/s/.../exec"
-          value="">
-        <button class="btn-gs" onclick="connectGSheet()">Kết nối</button>
+          value="https://script.google.com/macros/s/AKfycbxxvOJjEWwLFmXDF-E6irCP4CGlWbUQ-VknYhAu5Qm27QKl6DtAojBby59i2a589OE/exec"
+          style="width:100%;margin-bottom:8px">
+        <button class="btn-gs" onclick="connectGSheet()" style="width:100%">🔗 Kết nối Apps Script</button>
+        <div class="gs-status" id="gs-status"></div>
       </div>
-      <div class="gs-hint">
-        📌 Bước 1: Mở Google Sheet → <strong>Extensions → Apps Script</strong><br>
-        📌 Bước 2: Dán code Apps Script được cung cấp → Deploy → Web App<br>
-        📌 Bước 3: Copy URL Web App dán vào ô trên
-      </div>
-      <div class="gs-status" id="gs-status"></div>
 
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
-        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:8px">Hoặc dùng Sheet ID trực tiếp (cần publish public)</div>
-        <div class="gs-input-wrap">
+      <!-- Method B: SheetDB / direct CSV via multiple proxies -->
+      <div style="background:var(--s2);border-radius:12px;padding:16px;border:1px solid var(--bd)">
+        <div style="font-size:0.8rem;font-weight:700;margin-bottom:10px">Phương thức B — Tải CSV trực tiếp</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
           <input class="gs-url-input" id="gs-id-input" type="text"
-            placeholder="Sheet ID: 16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg"
-            value="16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg">
+            value="16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg"
+            placeholder="Sheet ID" style="flex:1;font-size:0.72rem">
           <input class="gs-url-input" id="gs-gid-input" type="text"
-            placeholder="GID (sheet tab): 1905902989"
-            value="1905902989" style="max-width:180px">
-          <button class="btn-gs" style="background:linear-gradient(135deg,#58a6ff,#388bfd)" onclick="connectGSheetCSV()">Tải CSV</button>
+            value="1905902989" placeholder="GID" style="width:130px;font-size:0.72rem">
         </div>
+        <button class="btn-gs" onclick="connectGSheetCSV()" style="width:100%;background:linear-gradient(135deg,#58a6ff,#388bfd)">📥 Tải dữ liệu CSV</button>
         <div class="gs-status" id="gs-status2"></div>
+        <div style="font-size:0.68rem;color:var(--mu);margin-top:8px;line-height:1.5">
+          ⚠ Yêu cầu: Google Sheet phải được <strong>Publish to web</strong><br>
+          (File → Share → Publish to web → Chọn sheet → Publish)
+        </div>
       </div>
+
+      <!-- Debug info -->
+      <div id="gs-debug" style="display:none;margin-top:12px;padding:10px;background:#0d1117;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--mu);max-height:120px;overflow-y:auto"></div>
     </div>
   </div>
 
@@ -1179,133 +1185,186 @@ function closeWeekPanel(){
   document.getElementById('overlay').style.display='none';
 }
 
-/* ═══ SOURCE SWITCHER (UPLOAD SCREEN) ═══ */
+/* ═══ SOURCE SWITCHER ═══ */
 function switchSrc(src){
   document.querySelectorAll('.src-tab').forEach((t,i)=>t.classList.toggle('active',['excel','gsheet'][i]===src));
   document.querySelectorAll('.src-pane').forEach(p=>p.classList.toggle('active',p.id==='src-'+src));
 }
 
-/* ═══ GOOGLE SHEETS INTEGRATION ═══ */
+/* ═══ GOOGLE SHEETS — MULTI-STRATEGY ═══ */
 let GS_MODE=false, GS_URL='', GS_INTERVAL=null, LAST_ROW_COUNT=0;
 
-function showGsStatus(elId,msg,type){
-  const el=document.getElementById(elId);
-  el.textContent=msg; el.className='gs-status '+type; el.style.display='block';
+function gsLog(msg){
+  const el=document.getElementById('gs-debug');
+  if(!el) return;
+  el.style.display='block';
+  el.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+function showStatus(id,msg,type){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.whiteSpace='pre-wrap';
+  el.textContent=msg;
+  el.className='gs-status '+type;
+  el.style.display='block';
 }
 
-/* ── JSONP helper (giải quyết CORS hoàn toàn) ── */
-function jsonpFetch(url, timeoutMs=15000){
-  return new Promise((resolve, reject)=>{
-    const cbName = '__gsCallback_' + Date.now();
-    const script  = document.createElement('script');
-    let done = false;
+/* ── STRATEGY 1: fetch() trực tiếp Apps Script (works khi deploy đúng) ── */
+async function tryFetchDirect(url){
+  gsLog('Strategy 1: fetch() direct...');
+  const r=await fetch(url+'?action=getData&t='+Date.now(),{
+    method:'GET', cache:'no-cache',
+    headers:{'Accept':'application/json'}
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  if(j.error) throw new Error(j.error);
+  if(!j.data||!j.data.length) throw new Error('Không có dữ liệu');
+  gsLog('Strategy 1 OK — '+j.data.length+' dòng');
+  return j;
+}
 
-    const cleanup = ()=>{
-      done = true;
-      delete window[cbName];
-      if(script.parentNode) script.parentNode.removeChild(script);
-    };
-
-    window[cbName] = (data)=>{ cleanup(); resolve(data); };
-
-    const sep = url.includes('?') ? '&' : '?';
-    script.src = url + sep + 'callback=' + cbName + '&t=' + Date.now();
-    script.onerror = ()=>{ cleanup(); reject(new Error('Script load error — kiểm tra URL Apps Script')); };
-
-    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('Timeout sau ' + (timeoutMs/1000) + 's')); }}, timeoutMs);
-    document.head.appendChild(script);
+/* ── STRATEGY 2: JSONP (inject script tag) ── */
+function tryJSONP(url, timeoutMs=12000){
+  gsLog('Strategy 2: JSONP...');
+  return new Promise((resolve,reject)=>{
+    const cb='__gs_'+Date.now();
+    const el=document.createElement('script');
+    let done=false;
+    const cleanup=()=>{done=true;delete window[cb];el.parentNode&&el.parentNode.removeChild(el);};
+    window[cb]=(d)=>{cleanup();resolve(d);};
+    el.onerror=()=>{cleanup();reject(new Error('JSONP script error'));};
+    el.src=url+'?action=getData&callback='+cb+'&t='+Date.now();
+    setTimeout(()=>{if(!done){cleanup();reject(new Error('JSONP timeout'));}},timeoutMs);
+    document.head.appendChild(el);
   });
 }
 
-/* ── Kết nối qua Apps Script Web App URL ── */
-async function connectGSheet(){
-  const url = document.getElementById('gs-url-input').value.trim();
-  if(!url){ showGsStatus('gs-status','⚠ Vui lòng nhập URL Apps Script Web App','err'); return; }
-  if(!url.includes('script.google.com')){ showGsStatus('gs-status','⚠ URL không hợp lệ. Phải là URL dạng https://script.google.com/macros/s/.../exec','err'); return; }
+/* ── STRATEGY 3: Proxy chain cho CSV (thử nhiều proxy) ── */
+const PROXIES=[
+  id=>`https://corsproxy.io/?${encodeURIComponent('https://docs.google.com/spreadsheets/d/'+id.sheetId+'/export?format=csv&gid='+id.gid)}`,
+  id=>`https://api.allorigins.win/raw?url=${encodeURIComponent('https://docs.google.com/spreadsheets/d/'+id.sheetId+'/export?format=csv&gid='+id.gid)}`,
+  id=>`https://thingproxy.freeboard.io/fetch/https://docs.google.com/spreadsheets/d/${id.sheetId}/export?format=csv&gid=${id.gid}`,
+  id=>`https://docs.google.com/spreadsheets/d/${id.sheetId}/export?format=csv&gid=${id.gid}`,
+];
 
-  showGsStatus('gs-status','⏳ Đang kết nối qua JSONP...','loading');
-  try{
-    const json = await jsonpFetch(url + '?action=getData');
-    if(json.error) throw new Error(json.error);
-    if(!json.data || !json.data.length) throw new Error('Sheet trống hoặc không có dữ liệu');
-
-    GS_MODE = true; GS_URL = url;
-    showGsStatus('gs-status',
-      `✅ Thành công! ${json.total.toLocaleString('vi-VN')} dòng · Sheet: "${json.sheetName}" · Cập nhật: ${json.lastUpdate}`,
-      'ok');
-    setTimeout(()=> launchDashboard(json.data, `Google Sheets · ${json.sheetName}`), 500);
-  } catch(err){
-    showGsStatus('gs-status',
-      '❌ ' + err.message + '\n\n👉 Kiểm tra:\n• URL đúng chưa?\n• Deploy "Who has access: Anyone"?\n• Apps Script có code mới nhất không?',
-      'err');
+async function tryCSVProxy(sheetId, gid){
+  for(let i=0;i<PROXIES.length;i++){
+    const proxyUrl=PROXIES[i]({sheetId,gid});
+    gsLog(`Strategy 3.${i+1}: CSV proxy ${i+1}...`);
+    try{
+      const r=await fetch(proxyUrl,{cache:'no-cache'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const text=await r.text();
+      if(text.length<50) throw new Error('Response quá ngắn');
+      if(text.includes('<!DOCTYPE')) throw new Error('Nhận HTML thay vì CSV — sheet chưa public');
+      const rows=parseCSV(text);
+      if(rows.length<2) throw new Error('CSV có <2 dòng');
+      gsLog(`Strategy 3.${i+1} OK — ${rows.length} dòng`);
+      return rows;
+    }catch(e){gsLog(`Strategy 3.${i+1} fail: ${e.message}`);}
   }
+  throw new Error('Tất cả CSV proxy thất bại');
 }
 
-/* ── Kết nối qua CSV export (Sheet phải publish public) ── */
+/* ── MAIN: Kết nối Apps Script ── */
+async function connectGSheet(){
+  const url=document.getElementById('gs-url-input').value.trim();
+  if(!url||!url.includes('script.google.com')){
+    showStatus('gs-status','⚠ URL không hợp lệ. Cần dạng: https://script.google.com/macros/s/.../exec','err');
+    return;
+  }
+  showStatus('gs-status','⏳ Đang thử kết nối...','loading');
+  document.getElementById('gs-debug').innerHTML='';
+
+  let json=null;
+  // Thử strategy 1 trước
+  try{ json=await tryFetchDirect(url); }
+  catch(e1){
+    gsLog('Strategy 1 fail: '+e1.message);
+    // Thử strategy 2 JSONP
+    try{ json=await tryJSONP(url); }
+    catch(e2){
+      gsLog('Strategy 2 fail: '+e2.message);
+      showStatus('gs-status',
+        '❌ Không kết nối được Apps Script.\n\n'+
+        '📋 Nguyên nhân thường gặp:\n'+
+        '1. Chưa deploy lại sau khi sửa code\n'+
+        '2. "Who has access" chưa chọn "Anyone"\n'+
+        '3. Cần dùng "New deployment" (không phải edit cũ)\n\n'+
+        '👉 Thử lại sau khi redeploy, hoặc dùng Phương thức B bên dưới.','err');
+      return;
+    }
+  }
+
+  if(!json||!json.data){
+    showStatus('gs-status','❌ Apps Script không trả về data đúng định dạng','err');
+    return;
+  }
+
+  GS_MODE=true; GS_URL=url;
+  showStatus('gs-status',
+    `✅ Kết nối thành công!\n📊 ${json.total?.toLocaleString('vi-VN')||json.data.length.toLocaleString('vi-VN')} dòng · Sheet: "${json.sheetName}" · ${json.lastUpdate||''}`,
+    'ok');
+  setTimeout(()=>launchDashboard(json.data, `Google Sheets · ${json.sheetName}`), 400);
+}
+
+/* ── MAIN: Kết nối CSV ── */
 async function connectGSheetCSV(){
-  const sheetId = document.getElementById('gs-id-input').value.trim();
-  const gid     = document.getElementById('gs-gid-input').value.trim() || '0';
-  if(!sheetId){ showGsStatus('gs-status2','⚠ Vui lòng nhập Sheet ID','err'); return; }
-
-  showGsStatus('gs-status2','⏳ Đang tải CSV...','loading');
-
-  // Dùng JSONP qua allorigins proxy để bypass CORS
-  const csvUrl  = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-  const proxyUrl= `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
-
+  const sheetId=document.getElementById('gs-id-input').value.trim();
+  const gid=document.getElementById('gs-gid-input').value.trim()||'0';
+  if(!sheetId){ showStatus('gs-status2','⚠ Nhập Sheet ID','err'); return; }
+  showStatus('gs-status2','⏳ Đang thử tải CSV qua nhiều proxy...','loading');
+  document.getElementById('gs-debug').innerHTML='';
   try{
-    const resp = await fetch(proxyUrl);
-    if(!resp.ok) throw new Error('Proxy lỗi HTTP ' + resp.status);
-    const json = await resp.json();
-    if(!json.contents) throw new Error('Không lấy được dữ liệu — sheet có thể chưa publish public');
-
-    const rows = parseCSV(json.contents);
-    if(!rows.length) throw new Error('CSV trống');
-
-    GS_MODE = true;
-    GS_URL  = `CSV:${sheetId}:${gid}`;
-    showGsStatus('gs-status2', `✅ Tải thành công! ${rows.length.toLocaleString('vi-VN')} dòng`, 'ok');
-    setTimeout(()=> launchDashboard(rows, `Google Sheets (CSV · ${rows.length.toLocaleString('vi-VN')} dòng)`), 500);
-  } catch(err){
-    showGsStatus('gs-status2',
-      '❌ ' + err.message +
-      '\n\n👉 Để dùng CSV: File → Share → Publish to web → Publish',
-      'err');
+    const rows=await tryCSVProxy(sheetId, gid);
+    GS_MODE=true;
+    GS_URL=`CSV:${sheetId}:${gid}`;
+    showStatus('gs-status2',`✅ Thành công! ${rows.length.toLocaleString('vi-VN')} dòng dữ liệu`,'ok');
+    setTimeout(()=>launchDashboard(rows,`Google Sheets (CSV · ${rows.length.toLocaleString('vi-VN')} dòng)`),400);
+  }catch(err){
+    showStatus('gs-status2',
+      '❌ '+err.message+'\n\n'+
+      '📋 Để fix:\n'+
+      'File → Share → Publish to web\n'+
+      '→ Chọn tab "PENDING" → Comma-separated values → Publish\n'+
+      '→ Thử lại sau khi publish','err');
   }
 }
 
 /* ── Parse CSV ── */
 function parseCSV(text){
-  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
   if(!lines.length) return [];
-  const headers = parseCSVLine(lines[0]);
-  const rows = [];
-  for(let i=1; i<lines.length; i++){
-    const vals = parseCSVLine(lines[i]);
+  const headers=parseCSVLine(lines[0]);
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=parseCSVLine(lines[i]);
     if(vals.every(v=>!v.trim())) continue;
-    const obj = {};
-    headers.forEach((h,j)=> obj[h.trim()] = (vals[j]||'').trim());
+    const obj={};
+    headers.forEach((h,j)=>obj[h.trim()]=(vals[j]||'').trim());
     rows.push(obj);
   }
   return rows;
 }
 function parseCSVLine(line){
-  const result=[]; let cur=''; let inQ=false;
+  const res=[]; let cur=''; let q=false;
   for(let i=0;i<line.length;i++){
     const c=line[i];
-    if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
-    else if(c===','&&!inQ){result.push(cur);cur='';}
+    if(c==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+    else if(c===','&&!q){res.push(cur);cur='';}
     else cur+=c;
   }
-  result.push(cur); return result;
+  res.push(cur); return res;
 }
 
 /* ── Auto-refresh ── */
-function toggleAutoRefresh(enabled){
-  if(GS_INTERVAL){ clearInterval(GS_INTERVAL); GS_INTERVAL=null; }
-  if(enabled && GS_MODE){
-    const ms = parseInt(document.getElementById('refresh-interval').value);
-    GS_INTERVAL = setInterval(()=> silentRefresh(), ms);
+function toggleAutoRefresh(on){
+  if(GS_INTERVAL){clearInterval(GS_INTERVAL);GS_INTERVAL=null;}
+  if(on&&GS_MODE){
+    const ms=parseInt(document.getElementById('refresh-interval').value);
+    GS_INTERVAL=setInterval(()=>silentRefresh(),ms);
   }
 }
 function changeRefreshInterval(){
@@ -1313,44 +1372,40 @@ function changeRefreshInterval(){
 }
 
 async function silentRefresh(){
-  if(!GS_MODE || !GS_URL) return;
+  if(!GS_MODE||!GS_URL) return;
   try{
-    let rows = [];
+    let rows=[];
     if(GS_URL.startsWith('CSV:')){
-      const [,sheetId,gid] = GS_URL.split(':');
-      const csvUrl   = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}&t=${Date.now()}`;
-      const resp = await fetch(proxyUrl);
-      if(!resp.ok) return;
-      const json = await resp.json();
-      rows = parseCSV(json.contents || '');
+      const [,sid,gid]=GS_URL.split(':');
+      rows=await tryCSVProxy(sid,gid);
     } else {
-      const json = await jsonpFetch(GS_URL + '?action=getData');
-      rows = json.data || [];
+      let json=null;
+      try{ json=await tryFetchDirect(GS_URL); }
+      catch(e){ try{ json=await tryJSONP(GS_URL,8000); }catch(_){} }
+      if(json) rows=json.data||[];
     }
     if(!rows.length) return;
-    if(rows.length !== LAST_ROW_COUNT){
-      LAST_ROW_COUNT = rows.length;
-      ALL_ROWS = rows; FILT_ROWS = [...rows];
+    if(rows.length!==LAST_ROW_COUNT){
+      LAST_ROW_COUNT=rows.length;
+      ALL_ROWS=rows; FILT_ROWS=[...rows];
       renderDashboard(FILT_ROWS); renderTqTrend();
       renderHangKhach(rows); renderHkTrend();
-      const now = new Date().toLocaleTimeString('vi-VN');
-      document.getElementById('hdr-sub').textContent =
-        `Google Sheets · ${fmt(rows.length)} dòng · Cập nhật: ${now}`;
+      document.getElementById('hdr-sub').textContent=
+        `Google Sheets · ${fmt(rows.length)} dòng · 🔄 ${new Date().toLocaleTimeString('vi-VN')}`;
     }
-  } catch(e){ console.warn('Auto-refresh error:', e.message); }
+  }catch(e){ console.warn('Refresh err:',e.message); }
 }
 
 async function manualRefresh(){
-  const btn = document.getElementById('btn-refresh');
+  const btn=document.getElementById('btn-refresh');
   btn.textContent='⏳ Đang tải...'; btn.disabled=true;
   await silentRefresh();
   btn.textContent='🔄 Cập nhật'; btn.disabled=false;
 }
 
 function launchDashboard(rows, sourceName){
-  LAST_ROW_COUNT = rows.length;
-  initDashboard(rows, sourceName);
+  LAST_ROW_COUNT=rows.length;
+  initDashboard(rows,sourceName);
   if(GS_MODE){
     document.getElementById('bdg-source').style.display='';
     document.getElementById('btn-refresh').style.display='flex';
