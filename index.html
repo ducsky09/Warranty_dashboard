@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Warranty Dashboard v3 – MediaMart</title>
+<title>Warranty Dashboard v5 – MediaMart</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -33,6 +33,31 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--tx
 .prog-bar{width:480px;height:4px;background:var(--bd);border-radius:2px;margin-top:18px;display:none}
 .prog-fill{height:100%;width:0%;background:var(--a2);border-radius:2px;transition:width .3s}
 .err-msg{color:var(--dg);font-size:0.78rem;margin-top:10px;display:none}
+
+/* ── GSHEET CONNECT ── */
+.source-tabs{display:flex;gap:0;background:var(--s2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:28px}
+.src-tab{flex:1;padding:10px 20px;background:transparent;border:none;color:var(--mu);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
+.src-tab.active{background:var(--a2);color:#0d1117}
+.src-pane{display:none}
+.src-pane.active{display:block}
+.gs-input-wrap{display:flex;gap:8px;margin-top:16px}
+.gs-url-input{flex:1;padding:10px 14px;background:var(--s2);border:1px solid var(--bd);border-radius:9px;color:var(--tx);font-size:0.8rem;font-family:'JetBrains Mono',monospace}
+.gs-url-input:focus{outline:none;border-color:var(--a2)}
+.btn-gs{padding:10px 20px;background:linear-gradient(135deg,#3fb950,#2ea043);color:#fff;border:none;border-radius:9px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .2s}
+.btn-gs:hover{opacity:.85}
+.gs-hint{font-size:0.72rem;color:var(--mu);margin-top:10px;line-height:1.6}
+.gs-status{margin-top:10px;font-size:0.76rem;display:none;padding:8px 12px;border-radius:8px}
+.gs-status.ok{background:rgba(63,185,80,.12);color:var(--a3);border:1px solid rgba(63,185,80,.25)}
+.gs-status.err{background:rgba(248,81,73,.12);color:var(--dg);border:1px solid rgba(248,81,73,.25)}
+.gs-status.loading{background:rgba(88,166,255,.12);color:var(--a2);border:1px solid rgba(88,166,255,.25)}
+
+/* ── LIVE INDICATOR ── */
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--a3);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-refresh{padding:5px 12px;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:7px;color:var(--a3);font-size:0.7rem;cursor:pointer;font-family:inherit;display:none;align-items:center;gap:5px}
+.btn-refresh:hover{background:rgba(63,185,80,.22)}
+.auto-refresh-wrap{display:flex;align-items:center;gap:8px;font-size:0.7rem;color:var(--mu)}
+.auto-chk{accent-color:var(--a3);width:13px;height:13px;cursor:pointer}
 
 /* ── HEADER ── */
 #dashboard{display:none}
@@ -178,6 +203,18 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
 .sp-btn{cursor:pointer;color:var(--a2);background:none;border:none;font-family:inherit;font-size:inherit;padding:0;text-decoration:underline;text-underline-offset:2px}
 .sp-btn:hover{color:#79c0ff}
 
+/* ── TIME TOGGLE ── */
+.time-toggle{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.tt-btn{padding:5px 14px;background:transparent;border:none;color:var(--mu);font-size:0.74rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;white-space:nowrap}
+.tt-btn:hover{color:var(--tx)}
+.tt-btn.active{background:var(--a2);color:#0d1117}
+.t-sel{padding:5px 10px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:0.74rem;font-family:inherit;cursor:pointer}
+.t-sel:focus{outline:none;border-color:var(--a2)}
+.trend-stat{display:flex;flex-direction:column;gap:2px;padding:8px 14px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)}
+.trend-stat .ts-lbl{font-size:0.62rem;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.trend-stat .ts-val{font-size:1rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.trend-stat .ts-sub{font-size:0.62rem;color:var(--mu)}
+
 /* sp loi drill panel */
 #hk-panel{display:none;position:fixed;top:0;right:0;width:500px;height:100vh;background:var(--sf);border-left:1px solid var(--bd);z-index:600;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
 #hk-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:590}
@@ -204,22 +241,72 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
 <!-- UPLOAD SCREEN -->
 <div id="upload-screen">
   <div class="up-logo">MediaMart</div>
-  <div class="up-sub">Warranty Dashboard v3 · Upload Excel để bắt đầu phân tích</div>
-  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-    <div class="drop-icon">📊</div>
-    <div class="drop-title">Kéo & thả file Excel vào đây</div>
-    <div class="drop-hint">
-      Hỗ trợ <strong>.xlsx / .xls</strong> · Xử lý hoàn toàn trên trình duyệt<br>
-      Cột bắt buộc: <code>Status, City, Nhóm hàng, Nhóm SP, Tên hãng</code><br>
-      <code>Trạng thái phiếu, Quá trình xử lý phiếu, Phân loại phiếu BH</code><br>
-      <code>Loại kho, Week (Tạo Phiếu)</code>
-    </div>
-    <button class="btn-up" onclick="event.stopPropagation();document.getElementById('file-input').click()">Chọn file Excel</button>
+  <div class="up-sub">Warranty Dashboard v5 · Chọn nguồn dữ liệu để bắt đầu</div>
+
+  <!-- Source tabs -->
+  <div class="source-tabs" style="width:520px">
+    <button class="src-tab active" onclick="switchSrc('excel')">📂 Upload Excel</button>
+    <button class="src-tab" onclick="switchSrc('gsheet')">🟢 Google Sheets (Live)</button>
   </div>
+
+  <!-- Excel pane -->
+  <div class="src-pane active" id="src-excel" style="width:520px">
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-icon">📊</div>
+      <div class="drop-title">Kéo & thả file Excel vào đây</div>
+      <div class="drop-hint">
+        Hỗ trợ <strong>.xlsx / .xls</strong> · Xử lý hoàn toàn trên trình duyệt<br>
+        Cột bắt buộc: <code>Status, City, Nhóm hàng, Nhóm SP, Tên hãng</code><br>
+        <code>Trạng thái phiếu, Quá trình xử lý phiếu, Phân loại phiếu BH</code><br>
+        <code>Loại kho, Week (Tạo Phiếu), Y+W (Tạo Phiếu), Y+M (Tạo Phiếu)</code>
+      </div>
+      <button class="btn-up" onclick="event.stopPropagation();document.getElementById('file-input').click()">Chọn file Excel</button>
+    </div>
+  </div>
+
+  <!-- Google Sheets pane -->
+  <div class="src-pane" id="src-gsheet" style="width:520px">
+    <div class="card" style="background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:24px">
+      <div style="font-size:0.88rem;font-weight:700;margin-bottom:6px">🔗 Kết nối Google Sheets</div>
+      <div style="font-size:0.76rem;color:var(--mu);margin-bottom:16px;line-height:1.6">
+        Nhập URL Google Sheet đã được <strong>publish to web</strong> hoặc dùng Apps Script Web App URL.<br>
+        Dashboard sẽ tự động cập nhật khi data thay đổi.
+      </div>
+
+      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:6px">Apps Script Web App URL</div>
+      <div class="gs-input-wrap">
+        <input class="gs-url-input" id="gs-url-input" type="text"
+          placeholder="https://script.google.com/macros/s/.../exec"
+          value="">
+        <button class="btn-gs" onclick="connectGSheet()">Kết nối</button>
+      </div>
+      <div class="gs-hint">
+        📌 Bước 1: Mở Google Sheet → <strong>Extensions → Apps Script</strong><br>
+        📌 Bước 2: Dán code Apps Script được cung cấp → Deploy → Web App<br>
+        📌 Bước 3: Copy URL Web App dán vào ô trên
+      </div>
+      <div class="gs-status" id="gs-status"></div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:8px">Hoặc dùng Sheet ID trực tiếp (cần publish public)</div>
+        <div class="gs-input-wrap">
+          <input class="gs-url-input" id="gs-id-input" type="text"
+            placeholder="Sheet ID: 16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg"
+            value="16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg">
+          <input class="gs-url-input" id="gs-gid-input" type="text"
+            placeholder="GID (sheet tab): 1905902989"
+            value="1905902989" style="max-width:180px">
+          <button class="btn-gs" style="background:linear-gradient(135deg,#58a6ff,#388bfd)" onclick="connectGSheetCSV()">Tải CSV</button>
+        </div>
+        <div class="gs-status" id="gs-status2"></div>
+      </div>
+    </div>
+  </div>
+
   <input type="file" id="file-input" accept=".xlsx,.xls">
-  <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="prog-bar" id="prog-bar" style="width:520px"><div class="prog-fill" id="prog-fill"></div></div>
   <div class="err-msg" id="err-msg"></div>
-  <div class="up-note">Dữ liệu không được gửi lên server — chạy 100% offline</div>
+  <div class="up-note">Dữ liệu không được gửi lên server — xử lý trực tiếp trên trình duyệt</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -234,7 +321,23 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
       <span class="badge b-dg" id="bdg-pending">—</span>
       <span class="badge b-ok" id="bdg-done">—</span>
       <span class="badge b-fil" id="bdg-filter">—</span>
-      <button class="btn-sm" onclick="resetApp()">↩ Đổi file</button>
+      <span class="badge" id="bdg-source" style="background:rgba(63,185,80,.12);color:var(--a3);border:1px solid rgba(63,185,80,.25);display:none">
+        <span class="live-dot"></span>Google Sheets
+      </span>
+      <div class="auto-refresh-wrap" id="auto-refresh-wrap" style="display:none">
+        <input type="checkbox" class="auto-chk" id="auto-refresh-chk" onchange="toggleAutoRefresh(this.checked)">
+        <label for="auto-refresh-chk" style="cursor:pointer">Tự động cập nhật</label>
+        <select id="refresh-interval" onchange="changeRefreshInterval()" style="padding:3px 6px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:0.68rem;font-family:inherit">
+          <option value="30000">30s</option>
+          <option value="60000" selected>1 phút</option>
+          <option value="300000">5 phút</option>
+          <option value="600000">10 phút</option>
+        </select>
+      </div>
+      <button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()">
+        🔄 Cập nhật
+      </button>
+      <button class="btn-sm" onclick="resetApp()">↩ Đổi nguồn</button>
     </div>
   </header>
 
@@ -315,15 +418,28 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
       <div class="card"><div class="card-title">Loại kho & Tỷ lệ</div><div id="progBars" style="padding-top:6px"></div></div>
     </div>
 
-    <!-- Row 4: Weekly -->
-    <div class="sec-title">Xu hướng tạo phiếu theo tuần <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a2);margin-left:8px">— click vào tuần bất kỳ để xem chi tiết</small></div>
+    <!-- Row 4: Xu hướng với bộ lọc Năm/Tháng/Tuần -->
+    <div class="sec-title">Xu hướng tạo phiếu theo thời gian <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a2);margin-left:8px">— Năm → Tháng → Tuần · click để drill-down chi tiết</small></div>
     <div class="gf">
       <div class="card">
-        <div class="card-title">
-          Số phiếu theo tuần
-          <small>Click vào cột hoặc điểm để drill-down chi tiết tuần đó</small>
+        <div class="card-title" style="flex-wrap:wrap;gap:10px">
+          <span>Xu hướng tạo phiếu</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto">
+            <div class="time-toggle" id="tq-toggle">
+              <button class="tt-btn" onclick="setTqView('year',this)">Năm</button>
+              <button class="tt-btn active" onclick="setTqView('month',this)">Tháng</button>
+              <button class="tt-btn" onclick="setTqView('week',this)">Tuần</button>
+            </div>
+            <select class="t-sel" id="tq-year-sel" onchange="renderTqTrend()" style="display:none">
+              <option value="">Tất cả năm</option>
+            </select>
+            <select class="t-sel" id="tq-month-sel" onchange="renderTqTrend()" style="display:none">
+              <option value="">Tất cả tháng</option>
+            </select>
+          </div>
         </div>
-        <div style="height:200px"><canvas id="cWeekly"></canvas></div>
+        <div style="height:220px"><canvas id="cTrend"></canvas></div>
+        <div id="tq-summary" style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap"></div>
       </div>
     </div>
   </main>
@@ -414,7 +530,7 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
       </div>
     </div>
 
-    <!-- Row 5: Tỉ lệ loại lỗi donut + Lỗi theo tháng -->
+    <!-- Row 5: Tỉ lệ loại lỗi donut + City -->
     <div class="sec-title">Phân bổ loại lỗi tổng thể</div>
     <div class="g2">
       <div class="card">
@@ -427,10 +543,35 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
       </div>
     </div>
 
+    <!-- Row 6: HK Xu hướng thời gian -->
+    <div class="sec-title">Xu hướng Hàng Khách theo thời gian <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a5);margin-left:8px">— Năm → Tháng → Tuần · click để drill-down chi tiết</small></div>
+    <div class="gf">
+      <div class="card">
+        <div class="card-title" style="flex-wrap:wrap;gap:10px">
+          <span>Xu hướng Hàng Khách</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto">
+            <div class="time-toggle" id="hk-toggle">
+              <button class="tt-btn" onclick="setHkView('year',this)">Năm</button>
+              <button class="tt-btn active" onclick="setHkView('month',this)">Tháng</button>
+              <button class="tt-btn" onclick="setHkView('week',this)">Tuần</button>
+            </div>
+            <select class="t-sel" id="hk-year-sel" onchange="renderHkTrend()" style="display:none">
+              <option value="">Tất cả năm</option>
+            </select>
+            <select class="t-sel" id="hk-month-sel" onchange="renderHkTrend()" style="display:none">
+              <option value="">Tất cả tháng</option>
+            </select>
+          </div>
+        </div>
+        <div style="height:220px"><canvas id="hk-cTrend"></canvas></div>
+        <div id="hk-summary" style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
   </main>
   </div><!-- end tab-hang-khach -->
 
-  <footer id="ftr">MediaMart Warranty Dashboard v3</footer>
+  <footer id="ftr">MediaMart Warranty Dashboard v4</footer>
 </div>
 
 <!-- HK OVERLAY -->
@@ -475,7 +616,7 @@ footer{text-align:center;padding:16px;color:var(--mu);font-size:0.66rem;border-t
   <div class="wp-body">
     <!-- week navigator -->
     <div style="margin-bottom:14px">
-      <div style="font-size:0.66rem;color:var(--mu);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em">Chuyển tuần nhanh</div>
+      <div style="font-size:0.66rem;color:var(--mu);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em">Chuyển tuần nhanh <span id="wp-year-ctx" style="font-weight:400;color:var(--a2)"></span></div>
       <div class="week-nav" id="week-nav"></div>
     </div>
     <!-- KPIs -->
@@ -678,6 +819,7 @@ function applyFilters(){
   } else { bdg.style.display='none'; }
 
   renderDashboard(FILT_ROWS);
+  renderTqTrend();
 }
 function clearAllFilters(){
   document.getElementById('sel-status').value='';
@@ -753,39 +895,258 @@ function renderDashboard(rows){
     {lbl:'Xong / Tổng',val:done.length,p:pct(done.length,total),color:'#3fb950'},
   ]);
 
-  // Weekly with click drill-down
-  const wm={};
-  rows.forEach(r=>{
-    const w=parseInt(r['Week (Tạo Phiếu)']);
-    if(!isNaN(w))wm[w]=(wm[w]||0)+1;
-  });
-  const weeks=Object.keys(wm).map(Number).sort((a,b)=>a-b);
-  charts.weekly=mkLine('cWeekly',weeks.map(w=>`Tuần ${w}`),weeks.map(w=>wm[w]),
-    lbl=>openWeekPanel(lbl.replace('Tuần ','')));
+  // Xu hướng thời gian – render with current view
+  renderTqTrend();
 }
 
+/* ═══ TREND ENGINE ═══ */
+// shared state
+let tqView='month', hkView='month';
+
+function getDateParts(row){
+  // Use Y+W for week (format: YYYYWW), Y+M for month (YYYYMM), Ngày tạo phiếu for year
+  const yw = row['Y+W (Tạo Phiếu)'];
+  const ym = row['Y+M (Tạo Phiếu)'];
+  const nd = row['Ngày tạo phiếu'];
+  let year=null,month=null,week=null;
+  // parse year+month: 202501 => year=2025 month=1
+  if(ym){
+    const s=String(parseInt(ym)||0);
+    if(s.length===6){year=parseInt(s.slice(0,4));month=parseInt(s.slice(4,6));}
+  }
+  // parse year+week: 202504 => year=2025 week=4
+  if(yw){
+    const s=String(parseInt(yw)||0);
+    if(s.length===6){week=parseInt(s.slice(4,6));}
+    if(!year&&s.length===6) year=parseInt(s.slice(0,4));
+  }
+  // fallback from date
+  if(!year&&nd){
+    try{const d=new Date(nd);if(!isNaN(d)){year=d.getFullYear();if(!month)month=d.getMonth()+1;}}catch(e){}
+  }
+  return{year,month,week};
+}
+
+function getYearsFrom(rows){
+  const ys=new Set();
+  rows.forEach(r=>{const {year}=getDateParts(r);if(year)ys.add(year);});
+  return [...ys].sort((a,b)=>a-b);
+}
+
+function buildYearSel(selId,rows){
+  const sel=document.getElementById(selId);
+  const cur=sel.value;
+  const years=getYearsFrom(rows);
+  sel.innerHTML='<option value="">Tất cả năm</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+function buildMonthSel(selId){
+  const sel=document.getElementById(selId);
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Tất cả tháng</option>'+Array.from({length:12},(_,i)=>`<option value="${i+1}">Tháng ${i+1}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function setTqView(v,btn){
+  tqView=v;
+  document.querySelectorAll('#tq-toggle .tt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const ySel=document.getElementById('tq-year-sel');
+  const mSel=document.getElementById('tq-month-sel');
+  ySel.style.display= (v==='month'||v==='week')?'':'none';
+  mSel.style.display= (v==='week')?'':'none';
+  renderTqTrend();
+}
+function setHkView(v,btn){
+  hkView=v;
+  document.querySelectorAll('#hk-toggle .tt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const ySel=document.getElementById('hk-year-sel');
+  const mSel=document.getElementById('hk-month-sel');
+  ySel.style.display= (v==='month'||v==='week')?'':'none';
+  mSel.style.display= (v==='week')?'':'none';
+  renderHkTrend();
+}
+
+function buildTrendData(rows, view, yearVal, monthVal){
+  const map={};
+  rows.forEach(r=>{
+    const {year,month,week}=getDateParts(r);
+    if(!year) return;
+    let key=null, label=null;
+    if(view==='year'){
+      key=year; label=String(year);
+    } else if(view==='month'){
+      if(yearVal&&year!==parseInt(yearVal)) return;
+      key=`${year}-${String(month||0).padStart(2,'0')}`;
+      label=`T${month||'?'}/${year}`;
+    } else if(view==='week'){
+      if(yearVal&&year!==parseInt(yearVal)) return;
+      if(monthVal&&month!==parseInt(monthVal)) return;
+      key=`${year}-W${String(week||0).padStart(2,'0')}`;
+      label=`W${week||'?'}`;
+    }
+    if(key) map[key]={label,count:(map[key]?.count||0)+1};
+  });
+  const sorted=Object.entries(map).sort((a,b)=>a[0]>b[0]?1:-1);
+  return{labels:sorted.map(e=>e[1].label), values:sorted.map(e=>e[1].count), keys:sorted.map(e=>e[0])};
+}
+
+function renderSummary(containerId, data, rows, view){
+  if(!data.values.length){document.getElementById(containerId).innerHTML='';return;}
+  const max=Math.max(...data.values), min=Math.min(...data.values);
+  const avg=Math.round(data.values.reduce((s,v)=>s+v,0)/data.values.length);
+  const total=data.values.reduce((s,v)=>s+v,0);
+  const maxLabel=data.labels[data.values.indexOf(max)];
+  const minLabel=data.labels[data.values.indexOf(min)];
+  document.getElementById(containerId).innerHTML=`
+    <div class="trend-stat"><div class="ts-lbl">Tổng</div><div class="ts-val">${fmt(total)}</div><div class="ts-sub">phiếu</div></div>
+    <div class="trend-stat"><div class="ts-lbl">Trung bình</div><div class="ts-val">${fmt(avg)}</div><div class="ts-sub">phiếu/${view==='year'?'năm':view==='month'?'tháng':'tuần'}</div></div>
+    <div class="trend-stat"><div class="ts-lbl">Cao nhất</div><div class="ts-val" style="color:var(--dg)">${fmt(max)}</div><div class="ts-sub">${maxLabel}</div></div>
+    <div class="trend-stat"><div class="ts-lbl">Thấp nhất</div><div class="ts-val" style="color:var(--a3)">${fmt(min)}</div><div class="ts-sub">${minLabel}</div></div>`;
+}
+
+function renderTrendChart(canvasId, data, color, view, yearSel, monthSel){
+  if(charts[canvasId]) charts[canvasId].destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const isLine=data.labels.length>20;
+  charts[canvasId]=new Chart(ctx,{
+    type: isLine?'line':'bar',
+    data:{
+      labels:data.labels,
+      datasets:[{
+        label:'Số phiếu',
+        data:data.values,
+        backgroundColor: isLine?(color+'22'):data.labels.map((_,i)=>{
+          const v=data.values[i],max=Math.max(...data.values);
+          const r=v/max;
+          return r>0.8?color+'ee':r>0.5?color+'99':color+'55';
+        }),
+        borderColor:color,
+        borderWidth:isLine?2:0,
+        borderRadius:isLine?0:5,
+        borderSkipped:false,
+        fill:isLine,
+        tension:0.4,
+        pointRadius:isLine?3:0,
+        pointHoverRadius:6,
+        pointBackgroundColor:color,
+        cursor:'pointer',
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      onClick(e,els){
+        if(!els.length) return;
+        const idx=els[0].index;
+        const key=data.keys[idx];
+        const label=data.labels[idx];
+        // Drill-down logic
+        if(view==='year'){
+          // click năm → chuyển sang xem tháng của năm đó
+          const yr=String(key);
+          document.getElementById(yearSel).value=yr;
+          // find the toggle and click "Tháng"
+          const toggleId=yearSel.replace('-year-sel','');
+          const btns=document.querySelectorAll(`#${toggleId}-toggle .tt-btn`);
+          btns.forEach(b=>{
+            if(b.textContent==='Tháng'){b.click();}
+          });
+        } else if(view==='month'){
+          // click tháng → chuyển sang xem tuần của tháng đó
+          const [yr,mm]=key.split('-');
+          document.getElementById(yearSel).value=yr;
+          document.getElementById(monthSel).value=parseInt(mm);
+          const toggleId=yearSel.replace('-year-sel','');
+          const btns=document.querySelectorAll(`#${toggleId}-toggle .tt-btn`);
+          btns.forEach(b=>{
+            if(b.textContent==='Tuần'){b.click();}
+          });
+        } else if(view==='week'){
+          // click tuần → mở drill-down panel chi tiết
+          // key format: YYYY-WNN, label: WNN
+          const [yr,wPart]=key.split('-W');
+          openWeekPanel(parseInt(wPart), parseInt(yr));
+        }
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:c=>{
+            const hint= view==='week'?'— click để xem chi tiết':view==='month'?'— click để xem tuần':'— click để xem tháng';
+            return `  ${fmt(c.raw)} phiếu ${hint}`;
+          }
+        }}
+      },
+      scales:{
+        x:{grid:{color:'#1c2230'},border:{display:false},ticks:{maxTicksLimit:data.labels.length>30?20:data.labels.length,font:{size:10},cursor:'pointer'}},
+        y:{grid:{color:'#1c2230'},border:{display:false},ticks:{font:{size:10}}}
+      }
+    }
+  });
+}
+
+function renderTqTrend(){
+  const yearVal=document.getElementById('tq-year-sel').value;
+  const monthVal=document.getElementById('tq-month-sel').value;
+  const data=buildTrendData(FILT_ROWS, tqView, yearVal, monthVal);
+  renderTrendChart('cTrend', data, '#58a6ff', tqView, 'tq-year-sel', 'tq-month-sel');
+  renderSummary('tq-summary', data, FILT_ROWS, tqView);
+}
+
+function renderHkTrend(){
+  const hkRows=ALL_ROWS.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách');
+  const yearVal=document.getElementById('hk-year-sel').value;
+  const monthVal=document.getElementById('hk-month-sel').value;
+  const data=buildTrendData(hkRows, hkView, yearVal, monthVal);
+  renderTrendChart('hk-cTrend', data, '#e3b341', hkView, 'hk-year-sel', 'hk-month-sel');
+  renderSummary('hk-summary', data, hkRows, hkView);
+}
+
+
 /* ═══ WEEKLY DRILL-DOWN ═══ */
-let currentWeek=null;
-function openWeekPanel(weekStr){
-  currentWeek=parseInt(weekStr);
+let currentWeek=null, currentWYear=null;
+function openWeekPanel(week, year){
+  currentWeek=week;
+  currentWYear=year||null;
   document.getElementById('overlay').style.display='block';
   document.getElementById('weekly-panel').style.display='flex';
 
-  // Build week nav buttons
-  const wm={};
-  FILT_ROWS.forEach(r=>{const w=parseInt(r['Week (Tạo Phiếu)']);if(!isNaN(w))wm[w]=(wm[w]||0)+1;});
-  const allWeeks=Object.keys(wm).map(Number).sort((a,b)=>a-b);
-  document.getElementById('week-nav').innerHTML=allWeeks.map(w=>
-    `<button class="wk-btn${w===currentWeek?' sel':''}" onclick="openWeekPanel(${w})">${w}</button>`).join('');
+  const ctxEl=document.getElementById('wp-year-ctx');
+  if(ctxEl) ctxEl.textContent=currentWYear?`· Năm ${currentWYear}`:'· Tất cả năm';
 
-  renderWeekPanel(currentWeek);
+  // Build week nav: if year known, show weeks of that year; else all
+  const wm={};
+  FILT_ROWS.forEach(r=>{
+    const {year:ry, week:rw}=getDateParts(r);
+    if(!rw) return;
+    const yw=currentWYear?`${ry}-W${String(rw).padStart(2,'0')}`:`W${rw}`;
+    if(currentWYear&&ry!==currentWYear) return;
+    wm[yw]=(wm[yw]||0)+1;
+  });
+  const allKeys=Object.keys(wm).sort();
+  document.getElementById('week-nav').innerHTML=allKeys.map(k=>{
+    const wNum=parseInt(k.split('-W').pop()||k.replace('W',''));
+    const isSel=wNum===currentWeek&&(!currentWYear||(k.startsWith(String(currentWYear))));
+    return`<button class="wk-btn${isSel?' sel':''}" onclick="openWeekPanel(${wNum},${currentWYear||'null'})" title="${k}">${wNum}</button>`;
+  }).join('');
+
+  renderWeekPanel(week, year);
 }
-function renderWeekPanel(week){
-  const wr=FILT_ROWS.filter(r=>parseInt(r['Week (Tạo Phiếu)'])===week);
+
+function renderWeekPanel(week, year){
+  // Filter rows by week (and year if specified)
+  const wr=FILT_ROWS.filter(r=>{
+    const {year:ry, week:rw}=getDateParts(r);
+    const wMatch=rw===week;
+    const yMatch=!year||ry===year;
+    return wMatch&&yMatch;
+  });
   const pend=wr.filter(r=>(r['Status']||'').trim()==='Pending');
   const done=wr.filter(r=>(r['Status']||'').trim()==='Xong');
 
-  document.getElementById('wp-title').textContent=`Chi tiết Tuần ${week}`;
+  const yearLabel=year?` / ${year}`:'';
+  document.getElementById('wp-title').textContent=`Chi tiết Tuần ${week}${yearLabel}`;
   document.getElementById('wp-sub').textContent=`${fmt(wr.length)} phiếu · ${fmt(pend.length)} Pending · ${fmt(done.length)} Xong`;
 
   document.getElementById('wp-kpis').innerHTML=`
@@ -809,7 +1170,6 @@ function renderWeekPanel(week){
     });
   }
 
-  // update nav highlight
   document.querySelectorAll('.wk-btn').forEach(b=>{
     b.classList.toggle('sel',parseInt(b.textContent)===week);
   });
@@ -819,8 +1179,187 @@ function closeWeekPanel(){
   document.getElementById('overlay').style.display='none';
 }
 
+/* ═══ SOURCE SWITCHER (UPLOAD SCREEN) ═══ */
+function switchSrc(src){
+  document.querySelectorAll('.src-tab').forEach((t,i)=>t.classList.toggle('active',['excel','gsheet'][i]===src));
+  document.querySelectorAll('.src-pane').forEach(p=>p.classList.toggle('active',p.id==='src-'+src));
+}
+
+/* ═══ GOOGLE SHEETS INTEGRATION ═══ */
+let GS_MODE=false, GS_URL='', GS_INTERVAL=null, LAST_ROW_COUNT=0;
+
+function showGsStatus(elId,msg,type){
+  const el=document.getElementById(elId);
+  el.textContent=msg; el.className='gs-status '+type; el.style.display='block';
+}
+
+/* ── JSONP helper (giải quyết CORS hoàn toàn) ── */
+function jsonpFetch(url, timeoutMs=15000){
+  return new Promise((resolve, reject)=>{
+    const cbName = '__gsCallback_' + Date.now();
+    const script  = document.createElement('script');
+    let done = false;
+
+    const cleanup = ()=>{
+      done = true;
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+
+    window[cbName] = (data)=>{ cleanup(); resolve(data); };
+
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = url + sep + 'callback=' + cbName + '&t=' + Date.now();
+    script.onerror = ()=>{ cleanup(); reject(new Error('Script load error — kiểm tra URL Apps Script')); };
+
+    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('Timeout sau ' + (timeoutMs/1000) + 's')); }}, timeoutMs);
+    document.head.appendChild(script);
+  });
+}
+
+/* ── Kết nối qua Apps Script Web App URL ── */
+async function connectGSheet(){
+  const url = document.getElementById('gs-url-input').value.trim();
+  if(!url){ showGsStatus('gs-status','⚠ Vui lòng nhập URL Apps Script Web App','err'); return; }
+  if(!url.includes('script.google.com')){ showGsStatus('gs-status','⚠ URL không hợp lệ. Phải là URL dạng https://script.google.com/macros/s/.../exec','err'); return; }
+
+  showGsStatus('gs-status','⏳ Đang kết nối qua JSONP...','loading');
+  try{
+    const json = await jsonpFetch(url + '?action=getData');
+    if(json.error) throw new Error(json.error);
+    if(!json.data || !json.data.length) throw new Error('Sheet trống hoặc không có dữ liệu');
+
+    GS_MODE = true; GS_URL = url;
+    showGsStatus('gs-status',
+      `✅ Thành công! ${json.total.toLocaleString('vi-VN')} dòng · Sheet: "${json.sheetName}" · Cập nhật: ${json.lastUpdate}`,
+      'ok');
+    setTimeout(()=> launchDashboard(json.data, `Google Sheets · ${json.sheetName}`), 500);
+  } catch(err){
+    showGsStatus('gs-status',
+      '❌ ' + err.message + '\n\n👉 Kiểm tra:\n• URL đúng chưa?\n• Deploy "Who has access: Anyone"?\n• Apps Script có code mới nhất không?',
+      'err');
+  }
+}
+
+/* ── Kết nối qua CSV export (Sheet phải publish public) ── */
+async function connectGSheetCSV(){
+  const sheetId = document.getElementById('gs-id-input').value.trim();
+  const gid     = document.getElementById('gs-gid-input').value.trim() || '0';
+  if(!sheetId){ showGsStatus('gs-status2','⚠ Vui lòng nhập Sheet ID','err'); return; }
+
+  showGsStatus('gs-status2','⏳ Đang tải CSV...','loading');
+
+  // Dùng JSONP qua allorigins proxy để bypass CORS
+  const csvUrl  = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  const proxyUrl= `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+
+  try{
+    const resp = await fetch(proxyUrl);
+    if(!resp.ok) throw new Error('Proxy lỗi HTTP ' + resp.status);
+    const json = await resp.json();
+    if(!json.contents) throw new Error('Không lấy được dữ liệu — sheet có thể chưa publish public');
+
+    const rows = parseCSV(json.contents);
+    if(!rows.length) throw new Error('CSV trống');
+
+    GS_MODE = true;
+    GS_URL  = `CSV:${sheetId}:${gid}`;
+    showGsStatus('gs-status2', `✅ Tải thành công! ${rows.length.toLocaleString('vi-VN')} dòng`, 'ok');
+    setTimeout(()=> launchDashboard(rows, `Google Sheets (CSV · ${rows.length.toLocaleString('vi-VN')} dòng)`), 500);
+  } catch(err){
+    showGsStatus('gs-status2',
+      '❌ ' + err.message +
+      '\n\n👉 Để dùng CSV: File → Share → Publish to web → Publish',
+      'err');
+  }
+}
+
+/* ── Parse CSV ── */
+function parseCSV(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  if(!lines.length) return [];
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for(let i=1; i<lines.length; i++){
+    const vals = parseCSVLine(lines[i]);
+    if(vals.every(v=>!v.trim())) continue;
+    const obj = {};
+    headers.forEach((h,j)=> obj[h.trim()] = (vals[j]||'').trim());
+    rows.push(obj);
+  }
+  return rows;
+}
+function parseCSVLine(line){
+  const result=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if(c===','&&!inQ){result.push(cur);cur='';}
+    else cur+=c;
+  }
+  result.push(cur); return result;
+}
+
+/* ── Auto-refresh ── */
+function toggleAutoRefresh(enabled){
+  if(GS_INTERVAL){ clearInterval(GS_INTERVAL); GS_INTERVAL=null; }
+  if(enabled && GS_MODE){
+    const ms = parseInt(document.getElementById('refresh-interval').value);
+    GS_INTERVAL = setInterval(()=> silentRefresh(), ms);
+  }
+}
+function changeRefreshInterval(){
+  if(document.getElementById('auto-refresh-chk').checked) toggleAutoRefresh(true);
+}
+
+async function silentRefresh(){
+  if(!GS_MODE || !GS_URL) return;
+  try{
+    let rows = [];
+    if(GS_URL.startsWith('CSV:')){
+      const [,sheetId,gid] = GS_URL.split(':');
+      const csvUrl   = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}&t=${Date.now()}`;
+      const resp = await fetch(proxyUrl);
+      if(!resp.ok) return;
+      const json = await resp.json();
+      rows = parseCSV(json.contents || '');
+    } else {
+      const json = await jsonpFetch(GS_URL + '?action=getData');
+      rows = json.data || [];
+    }
+    if(!rows.length) return;
+    if(rows.length !== LAST_ROW_COUNT){
+      LAST_ROW_COUNT = rows.length;
+      ALL_ROWS = rows; FILT_ROWS = [...rows];
+      renderDashboard(FILT_ROWS); renderTqTrend();
+      renderHangKhach(rows); renderHkTrend();
+      const now = new Date().toLocaleTimeString('vi-VN');
+      document.getElementById('hdr-sub').textContent =
+        `Google Sheets · ${fmt(rows.length)} dòng · Cập nhật: ${now}`;
+    }
+  } catch(e){ console.warn('Auto-refresh error:', e.message); }
+}
+
+async function manualRefresh(){
+  const btn = document.getElementById('btn-refresh');
+  btn.textContent='⏳ Đang tải...'; btn.disabled=true;
+  await silentRefresh();
+  btn.textContent='🔄 Cập nhật'; btn.disabled=false;
+}
+
+function launchDashboard(rows, sourceName){
+  LAST_ROW_COUNT = rows.length;
+  initDashboard(rows, sourceName);
+  if(GS_MODE){
+    document.getElementById('bdg-source').style.display='';
+    document.getElementById('btn-refresh').style.display='flex';
+    document.getElementById('auto-refresh-wrap').style.display='flex';
+  }
+}
+
 /* ═══ BOOTSTRAP ═══ */
-function initDashboard(rows,filename){
+function initDashboard(rows,sourceName){
   ALL_ROWS=rows;
   buildCityDD();
 
@@ -829,16 +1368,26 @@ function initDashboard(rows,filename){
   const sel=document.getElementById('sel-nhom');
   nhoms.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent='📦 '+n;sel.appendChild(o);});
 
+  // Build year & month selects for both trend charts
+  buildYearSel('tq-year-sel', rows);
+  buildMonthSel('tq-month-sel');
+  buildYearSel('hk-year-sel', rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách'));
+  buildMonthSel('hk-month-sel');
+  // Default: show year select for month view
+  document.getElementById('tq-year-sel').style.display='';
+  document.getElementById('hk-year-sel').style.display='';
+
   document.getElementById('tab-nav').style.display='flex';
   document.getElementById('filter-bar').style.display='flex';
   document.getElementById('upload-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
-  document.getElementById('hdr-sub').textContent=`Dữ liệu từ ${filename} · ${fmt(rows.length)} phiếu · v3 với phân tích Hàng Khách`;
-  document.getElementById('ftr').textContent=`MediaMart Warranty Dashboard v3 · ${filename} · ${fmt(rows.length)} phiếu`;
+  document.getElementById('hdr-sub').textContent=`${sourceName} · ${fmt(rows.length)} phiếu · v5`;
+  document.getElementById('ftr').textContent=`MediaMart Warranty Dashboard v5 · ${sourceName} · ${fmt(rows.length)} phiếu`;
 
   FILT_ROWS=[...rows];
   renderDashboard(FILT_ROWS);
   renderHangKhach(rows);
+  renderHkTrend();
 }
 
 function handleFile(file){
@@ -857,7 +1406,7 @@ function handleFile(file){
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
       pf.style.width='100%';
       if(!rows.length){showErr('Sheet trống');pb.style.display='none';return;}
-      setTimeout(()=>{pb.style.display='none';initDashboard(rows,file.name);},300);
+      setTimeout(()=>{pb.style.display='none';GS_MODE=false;launchDashboard(rows,file.name);},300);
     }catch(err){pb.style.display='none';showErr('Lỗi: '+err.message);}
   };
   reader.readAsArrayBuffer(file);
@@ -868,14 +1417,18 @@ function resetApp(){
   document.getElementById('upload-screen').style.display='flex';
   document.getElementById('filter-bar').style.display='none';
   document.getElementById('tab-nav').style.display='none';
-  closeWeekPanel();
-  closeHkPanel();
-  destroyCharts();
-  destroyHkCharts();
+  document.getElementById('bdg-source').style.display='none';
+  document.getElementById('btn-refresh').style.display='none';
+  document.getElementById('auto-refresh-wrap').style.display='none';
+  document.getElementById('auto-refresh-chk').checked=false;
+  if(GS_INTERVAL){clearInterval(GS_INTERVAL);GS_INTERVAL=null;}
+  GS_MODE=false; GS_URL='';
+  closeWeekPanel(); closeHkPanel();
+  destroyCharts(); destroyHkCharts();
   if(wpNhChart){wpNhChart.destroy();wpNhChart=null;}
   document.getElementById('file-input').value='';
   document.getElementById('sel-nhom').innerHTML='<option value="">📦 Tất cả nhóm hàng</option>';
-  ALL_ROWS=[];FILT_ROWS=[];
+  ALL_ROWS=[];FILT_ROWS=[];LAST_ROW_COUNT=0;
   switchTab('tong-quan');
 }
 
