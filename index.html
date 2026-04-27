@@ -555,13 +555,21 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">⏱</div><div class="kpi-lbl">TB ngày sửa (KTV)</div><div class="kpi-val" id="pf-k-avgdays" style="color:var(--a5)">—</div><div class="kpi-sub">Ngày / phiếu</div></div>
     <div class="kpi" style="--lc:var(--a4)"><div class="kpi-ico">📦</div><div class="kpi-lbl">Tồn đọng hiện tại</div><div class="kpi-val" id="pf-k-ton" style="color:var(--a4)">—</div><div class="kpi-sub">Chưa hoàn thành</div></div>
     <div class="kpi" style="--lc:var(--a3)"><div class="kpi-ico">🎯</div><div class="kpi-lbl">Tỉ lệ hoàn thành</div><div class="kpi-val" id="pf-k-rate" style="color:var(--a3)">—</div><div class="kpi-sub">% xong / tổng</div></div>
-    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% đúng ngày hẹn</div></div>
+    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% xong ≤ 7 ngày</div></div>
   </div>
 
   <!-- Bộ lọc nhẹ cho hiệu suất -->
   <div style="display:flex;gap:9px;align-items:center;margin-bottom:16px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--bd)">
     <span class="filter-label">Lọc HiệuSuất</span>
-    <select class="filter-select" id="pf-sel-year" onchange="renderPerf()"><option value="">Tất cả năm</option></select>
+    <select class="filter-select" id="pf-sel-year" onchange="onPfPeriodChange()"><option value="">Tất cả năm</option></select>
+    <select class="filter-select" id="pf-sel-month" onchange="onPfPeriodChange()" style="display:none"><option value="">Tất cả tháng</option></select>
+    <select class="filter-select" id="pf-sel-week" onchange="renderPerf()" style="display:none"><option value="">Tất cả tuần</option></select>
+    <div class="time-toggle" id="pf-period-toggle" style="margin-left:2px">
+      <button class="tt-btn active" onclick="setPfPeriod('year',this)">Năm</button>
+      <button class="tt-btn" onclick="setPfPeriod('month',this)">Tháng</button>
+      <button class="tt-btn" onclick="setPfPeriod('week',this)">Tuần</button>
+    </div>
+    <div style="width:1px;height:20px;background:var(--bd);margin:0 2px"></div>
     <select class="filter-select" id="pf-sel-loai" onchange="renderPerf()">
       <option value="">Tất cả loại kho</option><option value="Hàng khách">Hàng Khách</option><option value="Hàng kho">Hàng Kho</option>
     </select>
@@ -608,7 +616,7 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
       <div style="height:200px"><canvas id="pf-cDayDist"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">KPI đúng hạn <small>OK = xong ≤ ngày hẹn trả</small></div>
+      <div class="card-title">KPI đúng hạn <small>OK = Ngày KTV xong − Ngày tạo ≤ 7 ngày</small></div>
       <div style="height:200px"><canvas id="pf-cKpi"></canvas></div>
     </div>
   </div>
@@ -626,7 +634,7 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     </div>
   </div>
   <div class="gf"><div class="card">
-    <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Top 15 · Click cột để sắp xếp</small></div>
+    <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Tất cả thành phố · Click cột để sắp xếp</small></div>
     <div style="overflow-x:auto"><table class="sp-table" id="pf-cityTable">
       <thead><tr>
         <th onclick="sortCityTable(0)" style="cursor:pointer"># Thành phố ↕</th>
@@ -635,6 +643,8 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
         <th onclick="sortCityTable(3)" style="text-align:center;cursor:pointer">Pending ↕</th>
         <th onclick="sortCityTable(4)" style="text-align:center;cursor:pointer">Tỉ lệ % ↕</th>
         <th onclick="sortCityTable(5)" style="text-align:center;cursor:pointer">TB ngày ↕</th>
+        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer">KPI ≤7d ↕</th>
+        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer">% KPI ↕</th>
         <th style="min-width:120px">Trực quan</th>
       </tr></thead>
       <tbody id="pf-cityTbody"></tbody>
@@ -1521,10 +1531,6 @@ function handleFile(file){if(!file)return;
   catch(err){pb.style.display='none';document.getElementById('err-msg').textContent='Lỗi: '+err.message;document.getElementById('err-msg').style.display='block';}};
   reader.readAsArrayBuffer(file);}
 
-// ═══════════════════════════════════════════════
-// PERFORMANCE DASHBOARD
-// ═══════════════════════════════════════════════
-let pfView='week', cityTableData=[], cityTableSortCol=4, cityTableSortAsc=false;
 
 /* parse date string dd/MM/yyyy or ISO */
 function parseDate(v){
@@ -1547,19 +1553,79 @@ function getISOWeek(d){
   return{year:tmp.getUTCFullYear(),week:Math.ceil((((tmp-yearStart)/86400000)+1)/7)};
 }
 
+// KPI: số ngày từ tạo phiếu đến KTV sửa xong
+function calcKPI(taoDate,xongDate){
+  if(!taoDate||!xongDate)return null;
+  const diff=Math.round((xongDate-taoDate)/(1000*60*60*24));
+  return diff>=0?diff:null;
+}
+
+// ── Period filter: Năm / Tháng / Tuần ──
+function setPfPeriod(period,btn){
+  document.querySelectorAll('#pf-period-toggle .tt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pf-sel-year').style.display='';
+  document.getElementById('pf-sel-month').style.display=(period==='month'||period==='week')?'':'none';
+  document.getElementById('pf-sel-week').style.display=(period==='week')?'':'none';
+  if(period==='year'){
+    // Reset month/week when switching back to year mode
+    const mo=document.getElementById('pf-sel-month');if(mo)mo.value='';
+    const wk=document.getElementById('pf-sel-week');if(wk)wk.value='';
+  }
+  buildPfMonthWeekOpts();
+  renderPerf();
+}
+
+function onPfPeriodChange(){
+  buildPfMonthWeekOpts();
+  renderPerf();
+}
+
+function buildPfMonthWeekOpts(){
+  const yr=document.getElementById('pf-sel-year')?.value||'';
+  const mo=document.getElementById('pf-sel-month')?.value||'';
+  // Filter base rows by year
+  const baseRows=ALL_ROWS.filter(r=>{
+    if(!yr)return true;
+    const d=parseDate(r['Ngày tạo phiếu']);return d&&String(d.getFullYear())===yr;
+  });
+  // Build month options
+  const moSel=document.getElementById('pf-sel-month');
+  if(moSel){
+    const months=[...new Set(baseRows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getMonth()+1:null}).filter(Boolean))].sort((a,b)=>a-b);
+    const cur=moSel.value;
+    moSel.innerHTML='<option value="">Tất cả tháng</option>'+months.map(m=>`<option value="${m}">Tháng ${m}</option>`).join('');
+    if(cur)moSel.value=cur;
+  }
+  // Build week options filtered by year + month
+  const wkSel=document.getElementById('pf-sel-week');
+  if(wkSel){
+    const filtRows=baseRows.filter(r=>{
+      if(!mo)return true;
+      const d=parseDate(r['Ngày tạo phiếu']);return d&&String(d.getMonth()+1)===mo;
+    });
+    const weeks=[...new Set(filtRows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);if(!d)return null;const{week}=getISOWeek(d);return week;}).filter(Boolean))].sort((a,b)=>a-b);
+    const cur=wkSel.value;
+    wkSel.innerHTML='<option value="">Tất cả tuần</option>'+weeks.map(w=>`<option value="${w}">Tuần ${w}</option>`).join('');
+    if(cur)wkSel.value=cur;
+  }
+}
+
 function getPfRows(){
-  const yr=document.getElementById('pf-sel-year')?.value;
-  const loai=document.getElementById('pf-sel-loai')?.value;
-  const nhom=document.getElementById('pf-sel-nhom')?.value;
-  const city=document.getElementById('pf-sel-city')?.value;
+  const yr=document.getElementById('pf-sel-year')?.value||'';
+  const mo=document.getElementById('pf-sel-month')?.value||'';
+  const wk=document.getElementById('pf-sel-week')?.value||'';
+  const loai=document.getElementById('pf-sel-loai')?.value||'';
+  const nhom=document.getElementById('pf-sel-nhom')?.value||'';
+  const city=document.getElementById('pf-sel-city')?.value||'';
   return ALL_ROWS.filter(r=>{
-    if(loai&&(r['Loại kho']||'').trim()!==loai) return false;
-    if(nhom&&(r['Nhóm hàng']||'').trim()!==nhom) return false;
-    if(city&&(r['City']||'').trim()!==city) return false;
-    if(yr){
-      const d=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
-      if(!d||String(d.getFullYear())!==yr) return false;
-    }
+    if(loai&&(r['Loại kho']||'').trim()!==loai)return false;
+    if(nhom&&(r['Nhóm hàng']||'').trim()!==nhom)return false;
+    if(city&&(r['City']||'').trim()!==city)return false;
+    const d=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
+    if(yr&&(!d||String(d.getFullYear())!==yr))return false;
+    if(mo&&(!d||String(d.getMonth()+1)!==mo))return false;
+    if(wk){if(!d)return false;const{week}=getISOWeek(d);if(String(week)!==wk)return false;}
     return true;
   });
 }
@@ -1712,46 +1778,56 @@ function openPerfWeekDetail(d,rows){
 
 function renderPerf(){
   const rows=getPfRows();
+  const total=rows.length;
   const doneRows=rows.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null);
-  const total=rows.length, totalDone=doneRows.length;
+  const totalDone=doneRows.length;
 
-  // KPIs
+  // KPI mới: xong - tao <= 7 ngày
+  const kpiOK=doneRows.filter(r=>{
+    const diff=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+    return diff!==null&&diff<=7;
+  }).length;
+  const kpiNo=totalDone-kpiOK;
+  const kpiBlank=total-totalDone;
+
+  // KPI avgDays (tao -> xong)
+  const dayVals=doneRows.map(r=>{
+    const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+    return d!==null&&d>=0&&d<500?d:null;
+  }).filter(d=>d!==null);
+  const avgDays=dayVals.length?Math.round(dayVals.reduce((s,v)=>s+v,0)/dayVals.length):0;
+
   set$('pf-k-done',fmt(totalDone));
   set$('pf-k-total',fmt(total));
   set$('pf-k-rate',pct(totalDone,total));
   set$('pf-k-ton',fmt(total-totalDone));
-
-  // Avg days
-  const dayVals=rows.map(r=>parseFloat(r['Số ngày sửa chữa của KTV']||0)).filter(d=>d>0&&d<500);
-  const avgDays=dayVals.length?Math.round(dayVals.reduce((s,v)=>s+v,0)/dayVals.length):0;
   set$('pf-k-avgdays',avgDays+' ngày');
+  set$('pf-k-kpi',pct(kpiOK,totalDone||1));
 
-  // KPI
-  const kpiOK=rows.filter(r=>(r['KPI (OK nếu ngày hoàn thành <= ngày hẹn trả)']||'').trim().toUpperCase()==='OK').length;
-  set$('pf-k-kpi',pct(kpiOK,total));
-
-  // Build year select options
-  const yrSel=document.getElementById('pf-yr-sel');
+  // Init year select (only first time)
+  const yrSel=document.getElementById('pf-sel-year');
   if(yrSel&&yrSel.options.length<=1){
-    const years=[...new Set(rows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getFullYear():null}).filter(Boolean))].sort();
+    const years=[...new Set(ALL_ROWS.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getFullYear():null}).filter(Boolean))].sort();
     years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;yrSel.appendChild(o);});
   }
 
   // Avg days by nhom hang
   const nhomMap={};
-  rows.forEach(r=>{
-    const nh=(r['Nhóm hàng']||'').trim();const d=parseFloat(r['Số ngày sửa chữa của KTV']||0);
-    if(nh&&d>0&&d<500){if(!nhomMap[nh])nhomMap[nh]={sum:0,cnt:0};nhomMap[nh].sum+=d;nhomMap[nh].cnt++;}
+  doneRows.forEach(r=>{
+    const nh=(r['Nhóm hàng']||'').trim();
+    const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+    if(nh&&d!==null&&d>=0&&d<500){if(!nhomMap[nh])nhomMap[nh]={sum:0,cnt:0};nhomMap[nh].sum+=d;nhomMap[nh].cnt++;}
   });
   const nhomEntries=Object.entries(nhomMap).map(([k,v])=>[k,+(v.sum/v.cnt).toFixed(1)]).sort((a,b)=>b[1]-a[1]);
   dc('pf-cAvgNhom');
   const ctx3=document.getElementById('pf-cAvgNhom')?.getContext('2d');
   if(ctx3) CH['pf-cAvgNhom']=new Chart(ctx3,{type:'bar',
-    data:{labels:nhomEntries.map(d=>d[0]),datasets:[{data:nhomEntries.map(d=>d[1]),backgroundColor:PAL,borderRadius:5,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
+    data:{labels:nhomEntries.map(d=>d[0]),datasets:[{data:nhomEntries.map(d=>d[1]),backgroundColor:PAL.slice(0,nhomEntries.length),borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB (tạo→xong)`}}},
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{color:'#1c2230'},border:{display:false},title:{display:true,text:'Ngày',font:{size:10},color:'#7d8590'}}}}});
 
-  // Day distribution buckets
+  // Day distribution
   const buckets={'0 ngày':0,'1-3 ngày':0,'4-7 ngày':0,'8-14 ngày':0,'15-30 ngày':0,'31-60 ngày':0,'>60 ngày':0};
   dayVals.forEach(d=>{
     if(d===0)buckets['0 ngày']++;
@@ -1765,96 +1841,139 @@ function renderPerf(){
   dc('pf-cDayDist');
   const ctx4=document.getElementById('pf-cDayDist')?.getContext('2d');
   if(ctx4) CH['pf-cDayDist']=new Chart(ctx4,{type:'doughnut',
-    data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),backgroundColor:PAL,borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu`}}}}});
+    data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),
+      backgroundColor:['#3fb950','#56d364','#e3b341','#ffa657','#f78166','#f85149','#7d8590'],
+      borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu`}}}}});
 
-  // KPI donut
-  const kpiNo=rows.filter(r=>(r['KPI (OK nếu ngày hoàn thành <= ngày hẹn trả)']||'').trim().toUpperCase()==='NO').length;
-  const kpiBlank=total-kpiOK-kpiNo;
+  // KPI donut (tao->xong <=7)
   dc('pf-cKpi');
   const ctx5=document.getElementById('pf-cKpi')?.getContext('2d');
   if(ctx5) CH['pf-cKpi']=new Chart(ctx5,{type:'doughnut',
-    data:{labels:['OK – Đúng hạn','NO – Trễ hạn','Chưa xác định'],datasets:[{data:[kpiOK,kpiNo,kpiBlank],backgroundColor:['#3fb950','#f85149','#30363d'],borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}});
+    data:{labels:['✅ ≤7 ngày (KPI OK)','❌ >7 ngày (KPI NO)','⏳ Chưa xong'],
+      datasets:[{data:[kpiOK,kpiNo,kpiBlank],backgroundColor:['#3fb950','#f85149','#30363d'],
+        borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}});
 
-  // City stats
-  const cities=[...new Set(rows.map(r=>(r['City']||'').trim()).filter(Boolean))];
-  const cityStats=cities.map(city=>{
+  // ALL cities - no limit
+  const allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();
+  const cityStats=allCities.map(city=>{
     const sub=rows.filter(r=>(r['City']||'').trim()===city);
-    const xong=sub.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null).length;
+    if(!sub.length)return null;
+    const xongSub=sub.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null);
     const pend=sub.filter(r=>(r['Status']||'').trim()==='Pending').length;
-    const dv=sub.map(r=>parseFloat(r['Số ngày sửa chữa của KTV']||0)).filter(d=>d>0&&d<500);
+    const kpiOkCity=xongSub.filter(r=>{
+      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+      return d!==null&&d<=7;
+    }).length;
+    const dv=xongSub.map(r=>{
+      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+      return d!==null&&d>=0&&d<500?d:null;
+    }).filter(d=>d!==null);
     const avgD=dv.length?+(dv.reduce((s,v)=>s+v,0)/dv.length).toFixed(1):0;
-    return{city,total:sub.length,xong,pend,rate:sub.length?+(xong/sub.length*100).toFixed(1):0,avgDays:avgD};
-  }).sort((a,b)=>b.total-a.total).slice(0,15);
+    return{city,total:sub.length,xong:xongSub.length,pend,
+      rate:+(xongSub.length/sub.length*100).toFixed(1),
+      avgDays:avgD,kpiOk:kpiOkCity,
+      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0};
+  }).filter(Boolean).sort((a,b)=>b.total-a.total);
 
-  cityTableData=cityStats;renderCityTable();
+  cityTableData=cityStats;
+  cityTableSortCol=1; cityTableSortAsc=false;
+  renderCityTable();
 
-  // Top 12 for charts
+  // Charts top 12
   const top12=cityStats.slice(0,12);
-  dc('pf-cCityRate');dc('pf-cCityDays');
+  dc('pf-cCityRate'); dc('pf-cCityDays');
   const ctx6=document.getElementById('pf-cCityRate')?.getContext('2d');
   if(ctx6) CH['pf-cCityRate']=new Chart(ctx6,{type:'bar',
-    data:{labels:top12.map(d=>d.city),datasets:[{label:'Tỉ lệ %',data:top12.map(d=>d.rate),backgroundColor:top12.map((_,i)=>{const r=top12[i].rate;return r>=15?'#3fb95099':r>=8?'#e3b34199':'#f7816699';}),borderRadius:5,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw}% (${fmt(cityStats[c.dataIndex]?.xong||0)} / ${fmt(cityStats[c.dataIndex]?.total||0)})`}}},
+    data:{labels:top12.map(d=>d.city),datasets:[{label:'Tỉ lệ %',
+      data:top12.map(d=>d.rate),
+      backgroundColor:top12.map(d=>d.rate>=15?'#3fb95099':d.rate>=8?'#e3b34199':'#f7816699'),
+      borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw}% (${fmt(top12[c.dataIndex]?.xong||0)} xong / ${fmt(top12[c.dataIndex]?.total||0)} tổng)`}}},
       scales:{x:{grid:{color:'#1c2230'},border:{display:false},max:100,ticks:{callback:v=>v+'%'}},y:{grid:{display:false},border:{display:false}}}}});
 
+  const cd=[...top12].filter(d=>d.avgDays>0).sort((a,b)=>a.avgDays-b.avgDays);
   const ctx7=document.getElementById('pf-cCityDays')?.getContext('2d');
-  const cityDaysSorted=[...top12].sort((a,b)=>a.avgDays-b.avgDays);
   if(ctx7) CH['pf-cCityDays']=new Chart(ctx7,{type:'bar',
-    data:{labels:cityDaysSorted.map(d=>d.city),datasets:[{label:'TB ngày',data:cityDaysSorted.map(d=>d.avgDays),backgroundColor:cityDaysSorted.map(d=>d.avgDays<=20?'#3fb95088':d.avgDays<=50?'#e3b34188':'#f7816688'),borderRadius:5,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
+    data:{labels:cd.map(d=>d.city),datasets:[{label:'TB ngày',
+      data:cd.map(d=>d.avgDays),
+      backgroundColor:cd.map(d=>d.avgDays<=7?'#3fb95099':d.avgDays<=20?'#e3b34199':'#f7816699'),
+      borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false}}}}});
 
   // Top KTV
   const ktvMap={};
   rows.forEach(r=>{
-    const ktv=(r['Họ tên KTV']||'').trim();if(!ktv||ktv==='nan') return;
-    const xd=parseDate(r['Ngày KTV sửa xong']);if(!xd) return;
-    const d=parseFloat(r['Số ngày sửa chữa của KTV']||0);
+    const ktv=(r['Họ tên KTV']||'').trim(); if(!ktv||ktv==='nan')return;
+    const xd=parseDate(r['Ngày KTV sửa xong']); if(!xd)return;
+    const d=calcKPI(parseDate(r['Ngày tạo phiếu']),xd);
     if(!ktvMap[ktv])ktvMap[ktv]={cnt:0,days:[]};
-    ktvMap[ktv].cnt++;if(d>0&&d<500)ktvMap[ktv].days.push(d);
+    ktvMap[ktv].cnt++;
+    if(d!==null&&d>=0&&d<500)ktvMap[ktv].days.push(d);
   });
-  const ktvEntries=Object.entries(ktvMap)
-    .map(([k,v])=>{const nm=k.replace(/^MM\d+-/,'').replace(/^MM\d+\s*/,'');return{name:nm||k,cnt:v.cnt,avgD:v.days.length?+(v.days.reduce((s,d)=>s+d,0)/v.days.length).toFixed(1):0};})
-    .sort((a,b)=>b.cnt-a.cnt).slice(0,10);
-  dc('pf-cKTV');dc('pf-cKTVDays');
+  const ktvList=Object.entries(ktvMap).map(([k,v])=>({
+    name:k.replace(/^MM\d+[-\s]*/,'').trim()||k,
+    cnt:v.cnt,
+    avgD:v.days.length?+(v.days.reduce((s,d)=>s+d,0)/v.days.length).toFixed(1):0
+  })).sort((a,b)=>b.cnt-a.cnt).slice(0,10);
+
+  dc('pf-cKTV'); dc('pf-cKTVDays');
   const ctxK1=document.getElementById('pf-cKTV')?.getContext('2d');
   if(ctxK1) CH['pf-cKTV']=new Chart(ctxK1,{type:'bar',
-    data:{labels:ktvEntries.map(d=>d.name.slice(0,28)),datasets:[{data:ktvEntries.map(d=>d.cnt),backgroundColor:ktvEntries.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${ktvEntries[t[0].dataIndex].name}`,label:c=>`  ${fmt(c.raw)} phiếu xong`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10},maxTicksLimit:10}}}}});
+    data:{labels:ktvList.map(d=>d.name.slice(0,28)),
+      datasets:[{data:ktvList.map(d=>d.cnt),backgroundColor:ktvList.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${ktvList[t[0].dataIndex].name}`,label:c=>`  ${fmt(c.raw)} phiếu xong`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}}});
 
-  const ktvDaysSorted=[...ktvEntries].filter(d=>d.avgD>0).sort((a,b)=>a.avgD-b.avgD).slice(0,10);
+  const kd=[...ktvList].filter(d=>d.avgD>0).sort((a,b)=>a.avgD-b.avgD).slice(0,10);
   const ctxK2=document.getElementById('pf-cKTVDays')?.getContext('2d');
   if(ctxK2) CH['pf-cKTVDays']=new Chart(ctxK2,{type:'bar',
-    data:{labels:ktvDaysSorted.map(d=>d.name.slice(0,28)),datasets:[{data:ktvDaysSorted.map(d=>d.avgD),backgroundColor:ktvDaysSorted.map(d=>d.avgD<=15?'#3fb95088':d.avgD<=40?'#e3b34188':'#f7816688'),borderRadius:4,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${ktvDaysSorted[t[0].dataIndex].name}`,label:c=>`  ${c.raw} ngày TB`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10},maxTicksLimit:10}}}}});
+    data:{labels:kd.map(d=>d.name.slice(0,28)),
+      datasets:[{data:kd.map(d=>d.avgD),backgroundColor:kd.map(d=>d.avgD<=7?'#3fb95099':d.avgD<=20?'#e3b34199':'#f7816699'),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${kd[t[0].dataIndex].name}`,label:c=>`  ${c.raw} ngày TB`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}}});
 
   // SP performance
   const spMap={};
   rows.forEach(r=>{
-    const sp=(r['Nhóm SP']||'').trim();if(!sp)return;
+    const sp=(r['Nhóm SP']||'').trim(); if(!sp)return;
     const xd=parseDate(r['Ngày KTV sửa xong']);
-    const d=parseFloat(r['Số ngày sửa chữa của KTV']||0);
+    const d=calcKPI(parseDate(r['Ngày tạo phiếu']),xd);
     if(!spMap[sp])spMap[sp]={cnt:0,days:[]};
-    if(xd){spMap[sp].cnt++;if(d>0&&d<500)spMap[sp].days.push(d);}
+    if(xd){spMap[sp].cnt++;if(d!==null&&d>=0&&d<500)spMap[sp].days.push(d);}
   });
-  const spEntries=Object.entries(spMap).map(([k,v])=>({name:k,cnt:v.cnt,avgD:v.days.length?+(v.days.reduce((s,d)=>s+d,0)/v.days.length).toFixed(1):0})).filter(d=>d.cnt>0).sort((a,b)=>b.cnt-a.cnt).slice(0,12);
-  dc('pf-cSPDone');dc('pf-cSPDays');
+  const spList=Object.entries(spMap).map(([k,v])=>({
+    name:k,cnt:v.cnt,
+    avgD:v.days.length?+(v.days.reduce((s,d)=>s+d,0)/v.days.length).toFixed(1):0
+  })).filter(d=>d.cnt>0).sort((a,b)=>b.cnt-a.cnt).slice(0,12);
+
+  dc('pf-cSPDone'); dc('pf-cSPDays');
   const ctxS1=document.getElementById('pf-cSPDone')?.getContext('2d');
   if(ctxS1) CH['pf-cSPDone']=new Chart(ctxS1,{type:'bar',
-    data:{labels:spEntries.map(d=>d.name),datasets:[{data:spEntries.map(d=>d.cnt),backgroundColor:spEntries.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${fmt(c.raw)} phiếu xong`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}  }});
+    data:{labels:spList.map(d=>d.name),
+      datasets:[{data:spList.map(d=>d.cnt),backgroundColor:spList.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${fmt(c.raw)} phiếu xong`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}   }});
 
-  const spDaySorted=[...spEntries].filter(d=>d.avgD>0).sort((a,b)=>a.avgD-b.avgD).slice(0,12);
+  const sd=[...spList].filter(d=>d.avgD>0).sort((a,b)=>a.avgD-b.avgD).slice(0,12);
   const ctxS2=document.getElementById('pf-cSPDays')?.getContext('2d');
   if(ctxS2) CH['pf-cSPDays']=new Chart(ctxS2,{type:'bar',
-    data:{labels:spDaySorted.map(d=>d.name),datasets:[{data:spDaySorted.map(d=>d.avgD),backgroundColor:spDaySorted.map(d=>d.avgD<=15?'#3fb95088':d.avgD<=40?'#e3b34188':'#f7816688'),borderRadius:4,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}  }});
+    data:{labels:sd.map(d=>d.name),
+      datasets:[{data:sd.map(d=>d.avgD),backgroundColor:sd.map(d=>d.avgD<=7?'#3fb95099':d.avgD<=20?'#e3b34199':'#f7816699'),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}   }});
 
   renderPerfChart();
 }
@@ -1891,17 +2010,25 @@ function sortCityTable(col){
 }
 
 function clearPerfFilter(){
-  ['pf-sel-year','pf-sel-loai','pf-sel-nhom','pf-sel-city'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['pf-sel-year','pf-sel-month','pf-sel-week','pf-sel-loai','pf-sel-nhom','pf-sel-city'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  // Reset period toggle back to "Năm" (first button)
+  document.querySelectorAll('#pf-period-toggle .tt-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  const mo=document.getElementById('pf-sel-month');if(mo)mo.style.display='none';
+  const wk=document.getElementById('pf-sel-week');if(wk)wk.style.display='none';
+  buildPfMonthWeekOpts();
   renderPerf();
 }
 
 // ═══ INIT PERF ═══ called from initDashboard
 function initPerfFilters(rows){
-  // year
+  // year — pf-sel-year (filter bar) and pf-yr-sel (chart toggle)
+  const years=[...new Set(rows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getFullYear():null}).filter(Boolean))].sort();
   const yrSel=document.getElementById('pf-sel-year');
-  if(yrSel){const years=[...new Set(rows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getFullYear():null}).filter(Boolean))].sort();yrSel.innerHTML='<option value="">Tất cả năm</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');}
+  if(yrSel) yrSel.innerHTML='<option value="">Tất cả năm</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
   const yrSel2=document.getElementById('pf-yr-sel');
-  if(yrSel2){const years=[...new Set(rows.map(r=>{const d=parseDate(r['Ngày tạo phiếu']);return d?d.getFullYear():null}).filter(Boolean))].sort();yrSel2.innerHTML='<option value="">Tất cả năm</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');}
+  if(yrSel2) yrSel2.innerHTML='<option value="">Tất cả năm</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
   const moSel2=document.getElementById('pf-mo-sel');
   if(moSel2) moSel2.innerHTML='<option value="">Tất cả tháng</option>'+Array.from({length:12},(_,i)=>`<option value="${i+1}">Tháng ${i+1}</option>`).join('');
   // nhom
@@ -1910,6 +2037,8 @@ function initPerfFilters(rows){
   // city
   const citySel=document.getElementById('pf-sel-city');
   if(citySel){const cities=[...new Set(rows.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();citySel.innerHTML='<option value="">Tất cả thành phố</option>'+cities.map(c=>`<option value="${c}">${c}</option>`).join('');}
+  // Build month/week dropdowns (initially empty, filled dynamically)
+  buildPfMonthWeekOpts();
 }
 
 const dz=document.getElementById('drop-zone');
