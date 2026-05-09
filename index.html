@@ -136,6 +136,8 @@ main{padding:18px 22px;max-width:1700px;margin:0 auto}
 /* sp table */
 .sp-table{width:100%;border-collapse:collapse;font-size:.72rem}
 .sp-table th{padding:6px 8px;text-align:left;font-size:.59rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);border-bottom:1px solid var(--bd)}
+.sp-table thead tr:first-child th{border-bottom:none}
+.sp-table thead tr:last-child th{border-bottom:1px solid var(--bd)}
 .sp-table td{padding:6px 8px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle}
 .sp-table tr:last-child td{border-bottom:none}
 .sp-table tr:hover td{background:rgba(255,255,255,.02)}
@@ -637,17 +639,27 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
   <div class="gf"><div class="card">
     <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Tất cả thành phố · Click cột để sắp xếp</small></div>
     <div style="overflow-x:auto"><table class="sp-table" id="pf-cityTable">
-      <thead><tr>
-        <th onclick="sortCityTable(0)" style="cursor:pointer"># Thành phố ↕</th>
-        <th onclick="sortCityTable(1)" style="text-align:center;cursor:pointer">Tổng ↕</th>
-        <th onclick="sortCityTable(2)" style="text-align:center;cursor:pointer">Đã xong ↕</th>
-        <th onclick="sortCityTable(3)" style="text-align:center;cursor:pointer">Pending ↕</th>
-        <th onclick="sortCityTable(4)" style="text-align:center;cursor:pointer">Tỉ lệ % ↕</th>
-        <th onclick="sortCityTable(5)" style="text-align:center;cursor:pointer">TB ngày ↕</th>
-        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer;background:rgba(63,185,80,.06)">KPI ≤7d ↕<div style="font-size:.54rem;font-weight:400;color:var(--mu)">Số phiếu · %</div></th>
-        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer;background:rgba(88,166,255,.06)">KPI ≤10d ↕<div style="font-size:.54rem;font-weight:400;color:var(--mu)">Số phiếu · %</div></th>
-        <th style="min-width:100px">Trực quan</th>
-      </tr></thead>
+      <thead>
+        <tr style="border-bottom:none">
+          <th rowspan="2" onclick="sortCityTable(0)" style="cursor:pointer;vertical-align:middle"># Thành phố ↕</th>
+          <th rowspan="2" onclick="sortCityTable(1)" style="text-align:center;cursor:pointer;vertical-align:middle">Tổng ↕</th>
+          <th rowspan="2" onclick="sortCityTable(2)" style="text-align:center;cursor:pointer;vertical-align:middle">Đã xong ↕</th>
+          <th rowspan="2" onclick="sortCityTable(3)" style="text-align:center;cursor:pointer;vertical-align:middle">Pending ↕</th>
+          <th rowspan="2" onclick="sortCityTable(4)" style="text-align:center;cursor:pointer;vertical-align:middle">Tỉ lệ % ↕</th>
+          <th rowspan="2" onclick="sortCityTable(5)" style="text-align:center;cursor:pointer;vertical-align:middle">TB ngày ↕</th>
+          <th colspan="3" style="text-align:center;background:rgba(63,185,80,.08);color:var(--a3);font-size:.6rem;letter-spacing:.06em;border-bottom:1px solid rgba(63,185,80,.2)">⏱ KPI ĐÚNG HẠN (tạo → KTV xong)</th>
+          <th colspan="3" style="text-align:center;background:rgba(248,81,73,.06);color:var(--a1);font-size:.6rem;letter-spacing:.06em;border-bottom:1px solid rgba(248,81,73,.2)">📊 CHỈ SỐ CHẤT LƯỢNG</th>
+          <th rowspan="2" style="min-width:110px;vertical-align:middle">Trực quan</th>
+        </tr>
+        <tr>
+          <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer;background:rgba(63,185,80,.06)">≤7d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/xong</div></th>
+          <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer;background:rgba(88,166,255,.06)">≤10d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/xong</div></th>
+          <th onclick="sortCityTable(8)" style="text-align:center;cursor:pointer;background:rgba(227,179,65,.06)">≤15d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/xong</div></th>
+          <th onclick="sortCityTable(9)" style="text-align:center;cursor:pointer;background:rgba(248,81,73,.05)" title="Pending: trạng thái Mới tạo quá 2 ngày HOẶC Chuyển trạm quá 3 ngày / Tổng pending">🚨 Phiếu ảo ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">% / pending</div></th>
+          <th onclick="sortCityTable(10)" style="text-align:center;cursor:pointer;background:rgba(210,168,255,.05)" title="Pending PLBH: Tính phí / Tính phí tại nhà / Bán linh kiện / Từ chối BH / Trôi bảo hành hãng / Tổng pending">🚫 Không ĐK BH ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">% / pending</div></th>
+          <th onclick="sortCityTable(11)" style="text-align:center;cursor:pointer;background:rgba(255,166,87,.05)" title="Hàng kho pending có Ngày KTV đề xuất LK trong ≤3 ngày kể từ ngày tạo / Tổng hàng kho còn pending">📦 Kho đặt LK ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">≤3d · %/kho-pend</div></th>
+        </tr>
+      </thead>
       <tbody id="pf-cityTbody"></tbody>
     </table></div>
   </div></div>
@@ -1880,31 +1892,63 @@ function renderPerf(){
     </div>`;
 
   // ALL cities - no limit
+  const NOW_MS=Date.now();
+  const PLBH_KHONG_DK=['tính phí','tính phí tại nhà','bán linh kiện','từ chối bh','trôi bảo hành hãng'];
   const allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();
   const cityStats=allCities.map(city=>{
     const sub=rows.filter(r=>(r['City']||'').trim()===city);
     if(!sub.length)return null;
     const xongSub=sub.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null);
     const pend=sub.filter(r=>(r['Status']||'').trim()==='Pending').length;
-    const kpiOkCity=xongSub.filter(r=>{
-      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
-      return d!==null&&d<=7;
+
+    // KPI <=7, <=10, <=15
+    const kpiOkCity=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=7;}).length;
+    const kpiOk10City=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=10;}).length;
+    const kpiOk15City=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=15;}).length;
+
+    // Phiếu ảo: Pending + (trạng thái "Mới tạo" quá 2 ngày HOẶC "Chuyển trạm" quá 3 ngày) / tổng pending
+    const pendRows=sub.filter(r=>(r['Status']||'').trim()==='Pending');
+    const phieuAoCnt=pendRows.filter(r=>{
+      const tt=(r['Trạng thái phiếu']||'').toLowerCase().trim();
+      const ngayTao=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
+      if(!ngayTao)return false;
+      const daysSince=Math.floor((NOW_MS-ngayTao.getTime())/(1000*60*60*24));
+      if(tt.includes('mới tạo')&&daysSince>2)return true;
+      if((tt.includes('chuyển trạm')||tt.includes('chuyen tram'))&&daysSince>3)return true;
+      return false;
     }).length;
-    const kpiOk10City=xongSub.filter(r=>{
-      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
-      return d!==null&&d<=10;
+    const phieuAoRate=pendRows.length?+(phieuAoCnt/pendRows.length*100).toFixed(1):0;
+
+    // Không đủ ĐK BH tồn kho: Pending có PLBH thuộc danh sách / tổng pending
+    const khongDKCnt=pendRows.filter(r=>{
+      const pl=(r['Phân loại phiếu BH']||'').toLowerCase().trim();
+      return PLBH_KHONG_DK.some(k=>pl.includes(k));
     }).length;
-    const dv=xongSub.map(r=>{
-      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
-      return d!==null&&d>=0&&d<500?d:null;
-    }).filter(d=>d!==null);
+    const khongDKRate=pendRows.length?+(khongDKCnt/pendRows.length*100).toFixed(1):0;
+
+    // Hàng kho pending đặt LK ≤3 ngày (Ngày KTV đề xuất LK - Ngày tạo phiếu ≤3)
+    const khoPendRows=pendRows.filter(r=>(r['Loại kho']||'').toLowerCase().trim().includes('hàng kho')||(r['Loại kho']||'').toLowerCase().trim().includes('hang kho'));
+    const khoPendTotal=khoPendRows.length;
+    const khoLKOk=khoPendRows.filter(r=>{
+      const ngayDX=parseDate(r['Ngày KTV đề xuất LK'])||parseDate(r['Ngay KTV de xuat LK'])||parseDate(r['Ngày đề xuất LK'])||parseDate(r['Ngày KTV đặt LK'])||parseDate(r['Ngày đặt linh kiện'])||parseDate(r['Ngày đặt LK']);
+      const ngayTao=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
+      if(!ngayDX||!ngayTao)return false;
+      const diff=Math.round((ngayDX.getTime()-ngayTao.getTime())/(1000*60*60*24));
+      return diff>=0&&diff<=3;
+    }).length;
+    const khoLKRate=khoPendTotal?+(khoLKOk/khoPendTotal*100).toFixed(1):0;
+
+    const dv=xongSub.map(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d>=0&&d<500?d:null;}).filter(d=>d!==null);
     const avgD=dv.length?+(dv.reduce((s,v)=>s+v,0)/dv.length).toFixed(1):0;
-    return{city,total:sub.length,xong:xongSub.length,pend,
+    return{city,total:sub.length,xong:xongSub.length,pend:pendRows.length,
       rate:+(xongSub.length/sub.length*100).toFixed(1),
-      avgDays:avgD,kpiOk:kpiOkCity,
-      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0,
-      kpiOk10:kpiOk10City,
-      kpiRate10:xongSub.length?+(kpiOk10City/xongSub.length*100).toFixed(1):0};
+      avgDays:avgD,
+      kpiOk:kpiOkCity,kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0,
+      kpiOk10:kpiOk10City,kpiRate10:xongSub.length?+(kpiOk10City/xongSub.length*100).toFixed(1):0,
+      kpiOk15:kpiOk15City,kpiRate15:xongSub.length?+(kpiOk15City/xongSub.length*100).toFixed(1):0,
+      phieuAo:phieuAoCnt,phieuAoRate,pendTotal:pendRows.length,
+      khongDK:khongDKCnt,khongDKRate,
+      khoPendTotal,khoLKOk,khoLKRate};
   }).filter(Boolean).sort((a,b)=>b.total-a.total);
 
   cityTableData=cityStats;
@@ -2005,19 +2049,28 @@ function renderPerf(){
 }
 
 function renderCityTable(){
+  const SORT_KEYS=['city','total','xong','pend','rate','avgDays','kpiRate','kpiRate10','kpiRate15','phieuAoRate','khongDKRate','khoLKRate'];
   const sorted=[...cityTableData].sort((a,b)=>{
-    const keys=['city','total','xong','pend','rate','avgDays','kpiRate','kpiRate10'];
-    const va=a[keys[cityTableSortCol]]||0,vb=b[keys[cityTableSortCol]]||0;
-    return cityTableSortAsc?(va>vb?1:-1):(va<vb?1:-1);
+    const va=a[SORT_KEYS[cityTableSortCol]]||0,vb=b[SORT_KEYS[cityTableSortCol]]||0;
+    // For phieuAo & khongDK: lower = better → invert default sort direction
+    const invert=cityTableSortCol===9||cityTableSortCol===10;
+    const asc=invert?!cityTableSortAsc:cityTableSortAsc;
+    return asc?(va>vb?1:-1):(va<vb?1:-1);
   });
   const tbody=document.getElementById('pf-cityTbody');if(!tbody)return;
   tbody.innerHTML=sorted.map((d,i)=>{
     const cls=i===0?'city-rank-1':i===1?'city-rank-2':i===2?'city-rank-3':'city-rank-n';
-    const dayColor=d.avgDays<=7?'#3fb950':d.avgDays<=20?'#e3b341':'#f78166';
+    const dayColor=d.avgDays<=7?'#3fb950':d.avgDays<=15?'#e3b341':'#f78166';
     const kpi7Cls=d.kpiRate>=70?'rate-hi':d.kpiRate>=40?'rate-mid':'rate-lo';
     const kpi10Cls=d.kpiRate10>=80?'rate-hi':d.kpiRate10>=50?'rate-mid':'rate-lo';
+    const kpi15Cls=d.kpiRate15>=85?'rate-hi':d.kpiRate15>=60?'rate-mid':'rate-lo';
+    // Phiếu ảo & không ĐK BH: thấp = tốt
+    const aoCls=d.phieuAoRate<=5?'rate-hi':d.phieuAoRate<=15?'rate-mid':'rate-lo';
+    const dkCls=d.khongDKRate<=5?'rate-hi':d.khongDKRate<=15?'rate-mid':'rate-lo';
+    // Kho đặt LK ≤3d: cao = tốt
+    const khoLKCls=d.khoLKRate>=80?'rate-hi':d.khoLKRate>=50?'rate-mid':'rate-lo';
     return`<tr>
-      <td style="display:flex;align-items:center;gap:7px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
+      <td style="display:flex;align-items:center;gap:7px;min-width:120px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace">${fmt(d.total)}</td>
       <td style="text-align:center;color:var(--a3);font-family:'JetBrains Mono',monospace">${fmt(d.xong)}</td>
       <td style="text-align:center;color:var(--a1);font-family:'JetBrains Mono',monospace">${fmt(d.pend)}</td>
@@ -2031,10 +2084,29 @@ function renderCityTable(){
         <span class="rate-badge ${kpi10Cls}">${d.kpiRate10}%</span>
         <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk10)}/${fmt(d.xong)}</div>
       </td>
-      <td><div class="stack-bar" style="min-width:90px">
-        <div class="stack-seg" style="width:${d.xong?d.kpiOk/d.xong*100:0}%;background:#3fb95099" title="≤7d: ${d.kpiRate}%"></div>
-        <div class="stack-seg" style="width:${d.xong?(d.kpiOk10-d.kpiOk)/d.xong*100:0}%;background:#58a6ff88" title="≤10d: ${d.kpiRate10}%"></div>
-        <div class="stack-seg" style="width:${d.xong?(d.xong-d.kpiOk10)/d.xong*100:0}%;background:#f7816655" title=">10d"></div>
+      <td style="text-align:center;background:rgba(227,179,65,.04)">
+        <span class="rate-badge ${kpi15Cls}">${d.kpiRate15}%</span>
+        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk15)}/${fmt(d.xong)}</div>
+      </td>
+      <td style="text-align:center;background:rgba(248,81,73,.04)" title="Pending: Mới tạo >2d hoặc Chuyển trạm >3d / Tổng pending">
+        <span class="rate-badge ${aoCls}">${d.phieuAoRate}%</span>
+        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.phieuAo)}/${fmt(d.pend)}</div>
+      </td>
+      <td style="text-align:center;background:rgba(210,168,255,.04)" title="Pending PLBH Tính phí/Bán LK/Từ chối/Trôi BH / Tổng pending">
+        <span class="rate-badge ${dkCls}">${d.khongDKRate}%</span>
+        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.khongDK)}/${fmt(d.pend)}</div>
+      </td>
+      <td style="text-align:center;background:rgba(255,166,87,.04)" title="Hàng kho pending: KTV đề xuất LK trong ≤3 ngày / Tổng hàng kho pending">
+        ${d.khoPendTotal>0?`<span class="rate-badge ${khoLKCls}">${d.khoLKRate}%</span><div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.khoLKOk)}/${fmt(d.khoPendTotal)}</div>`:'<span style="color:var(--mu);font-size:.68rem">—</span>'}
+      </td>
+      <td><div class="stack-bar" style="min-width:90px;margin-bottom:3px" title="KPI xong: xanh=≤7d · vàng=7→15d · đỏ=>15d">
+        <div class="stack-seg" style="width:${d.xong?d.kpiOk/d.xong*100:0}%;background:#3fb95099"></div>
+        <div class="stack-seg" style="width:${d.xong?(d.kpiOk15-d.kpiOk)/d.xong*100:0}%;background:#e3b34188"></div>
+        <div class="stack-seg" style="width:${d.xong?(d.xong-d.kpiOk15)/d.xong*100:0}%;background:#f7816655"></div>
+      </div>
+      <div class="stack-bar" style="min-width:90px" title="Chất lượng pending: đỏ=phiếu ảo · tím=không ĐK BH">
+        <div class="stack-seg" style="width:${d.pend?d.phieuAo/d.pend*100:0}%;background:#f8514977"></div>
+        <div class="stack-seg" style="width:${d.pend?d.khongDK/d.pend*100:0}%;background:#d2a8ff88"></div>
       </div></td>
     </tr>`;
   }).join('');
@@ -2042,7 +2114,12 @@ function renderCityTable(){
 
 function sortCityTable(col){
   if(cityTableSortCol===col)cityTableSortAsc=!cityTableSortAsc;
-  else{cityTableSortCol=col;cityTableSortAsc=false;}
+  else{
+    cityTableSortCol=col;
+    // phiếu ảo (9) & không ĐK BH (10): mặc định sort tăng dần (vấn đề nổi lên đầu)
+    // kho đặt LK (11): mặc định sort giảm dần (tốt nhất lên đầu)
+    cityTableSortAsc=(col===9||col===10)?true:false;
+  }
   renderCityTable();
 }
 
