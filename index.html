@@ -555,7 +555,7 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">⏱</div><div class="kpi-lbl">TB ngày sửa (KTV)</div><div class="kpi-val" id="pf-k-avgdays" style="color:var(--a5)">—</div><div class="kpi-sub">Ngày / phiếu</div></div>
     <div class="kpi" style="--lc:var(--a4)"><div class="kpi-ico">📦</div><div class="kpi-lbl">Tồn đọng hiện tại</div><div class="kpi-val" id="pf-k-ton" style="color:var(--a4)">—</div><div class="kpi-sub">Chưa hoàn thành</div></div>
     <div class="kpi" style="--lc:var(--a3)"><div class="kpi-ico">🎯</div><div class="kpi-lbl">Tỉ lệ hoàn thành</div><div class="kpi-val" id="pf-k-rate" style="color:var(--a3)">—</div><div class="kpi-sub">% xong / tổng</div></div>
-    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% xong ≤ 7 ngày</div></div>
+    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% đúng hạn ≤ 7 ngày / tổng xong</div></div>
   </div>
 
   <!-- Bộ lọc nhẹ cho hiệu suất -->
@@ -612,12 +612,13 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
       <div style="height:200px"><canvas id="pf-cAvgNhom"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Phân bổ thời gian xử lý <small>Ngày sửa chữa</small></div>
+      <div class="card-title">Phân bổ thời gian xử lý <small>0–7 · 8–10 · 11–15 · 16–30 · 31–60 · >60 ngày</small></div>
       <div style="height:200px"><canvas id="pf-cDayDist"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">KPI đúng hạn <small>OK = Ngày KTV xong − Ngày tạo ≤ 7 ngày</small></div>
-      <div style="height:200px"><canvas id="pf-cKpi"></canvas></div>
+      <div class="card-title">KPI đúng hạn <small>Tạo phiếu → KTV sửa xong</small></div>
+      <div style="height:170px"><canvas id="pf-cKpi"></canvas></div>
+      <div id="pf-kpi-legend" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;justify-content:center"></div>
     </div>
   </div>
 
@@ -643,9 +644,9 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
         <th onclick="sortCityTable(3)" style="text-align:center;cursor:pointer">Pending ↕</th>
         <th onclick="sortCityTable(4)" style="text-align:center;cursor:pointer">Tỉ lệ % ↕</th>
         <th onclick="sortCityTable(5)" style="text-align:center;cursor:pointer">TB ngày ↕</th>
-        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer">KPI ≤7d ↕</th>
-        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer">% KPI ↕</th>
-        <th style="min-width:120px">Trực quan</th>
+        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer;background:rgba(63,185,80,.06)">KPI ≤7d ↕<div style="font-size:.54rem;font-weight:400;color:var(--mu)">Số phiếu · %</div></th>
+        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer;background:rgba(88,166,255,.06)">KPI ≤10d ↕<div style="font-size:.54rem;font-weight:400;color:var(--mu)">Số phiếu · %</div></th>
+        <th style="min-width:100px">Trực quan</th>
       </tr></thead>
       <tbody id="pf-cityTbody"></tbody>
     </table></div>
@@ -1828,13 +1829,12 @@ function renderPerf(){
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{color:'#1c2230'},border:{display:false},title:{display:true,text:'Ngày',font:{size:10},color:'#7d8590'}}}}});
 
   // Day distribution
-  const buckets={'0 ngày':0,'1-3 ngày':0,'4-7 ngày':0,'8-14 ngày':0,'15-30 ngày':0,'31-60 ngày':0,'>60 ngày':0};
+  const buckets={'0-7 ngày':0,'8-10 ngày':0,'11-15 ngày':0,'16-30 ngày':0,'31-60 ngày':0,'>60 ngày':0};
   dayVals.forEach(d=>{
-    if(d===0)buckets['0 ngày']++;
-    else if(d<=3)buckets['1-3 ngày']++;
-    else if(d<=7)buckets['4-7 ngày']++;
-    else if(d<=14)buckets['8-14 ngày']++;
-    else if(d<=30)buckets['15-30 ngày']++;
+    if(d<=7)buckets['0-7 ngày']++;
+    else if(d<=10)buckets['8-10 ngày']++;
+    else if(d<=15)buckets['11-15 ngày']++;
+    else if(d<=30)buckets['16-30 ngày']++;
     else if(d<=60)buckets['31-60 ngày']++;
     else buckets['>60 ngày']++;
   });
@@ -1842,22 +1842,42 @@ function renderPerf(){
   const ctx4=document.getElementById('pf-cDayDist')?.getContext('2d');
   if(ctx4) CH['pf-cDayDist']=new Chart(ctx4,{type:'doughnut',
     data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),
-      backgroundColor:['#3fb950','#56d364','#e3b341','#ffa657','#f78166','#f85149','#7d8590'],
+      backgroundColor:['#3fb950','#56d364','#e3b341','#ffa657','#f78166','#f85149'],
       borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
       plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu`}}}}});
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu (${dayVals.length?+(c.raw/dayVals.length*100).toFixed(1):0}%)`}}}}});
 
   // KPI donut (tao->xong <=7)
   dc('pf-cKpi');
   const ctx5=document.getElementById('pf-cKpi')?.getContext('2d');
+  const kpiOKpct=totalDone?+(kpiOK/totalDone*100).toFixed(1):0;
+  const kpiNOpct=totalDone?+(kpiNo/totalDone*100).toFixed(1):0;
+  const kpiBlankPct=total?+(kpiBlank/total*100).toFixed(1):0;
   if(ctx5) CH['pf-cKpi']=new Chart(ctx5,{type:'doughnut',
-    data:{labels:['✅ ≤7 ngày (KPI OK)','❌ >7 ngày (KPI NO)','⏳ Chưa xong'],
+    data:{labels:[`✅ Đúng hạn ≤7d (${kpiOKpct}%)`,`❌ Quá hạn >7d (${kpiNOpct}%)`,`⏳ Chưa xong (${kpiBlankPct}%)`],
       datasets:[{data:[kpiOK,kpiNo,kpiBlank],backgroundColor:['#3fb950','#f85149','#30363d'],
         borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}});
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>{const tot2=c.dataIndex<2?totalDone:total;return` ${c.label}: ${fmt(c.raw)} phiếu`;}}}}}});
+  // KPI summary legend
+  const kpiLegEl=document.getElementById('pf-kpi-legend');
+  if(kpiLegEl) kpiLegEl.innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:5px;width:100%">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25);border-radius:7px">
+        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#3fb950;display:inline-block"></span>✅ Đúng hạn ≤7 ngày</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:#3fb950">${fmt(kpiOK)} <span style="color:var(--mu);font-size:.65rem">(${kpiOKpct}%)</span></span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.25);border-radius:7px">
+        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#f85149;display:inline-block"></span>❌ Quá hạn >7 ngày</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:#f85149">${fmt(kpiNo)} <span style="color:var(--mu);font-size:.65rem">(${kpiNOpct}%)</span></span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(48,54,61,.35);border:1px solid var(--bd);border-radius:7px">
+        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#7d8590;display:inline-block"></span>⏳ Chưa có ngày xong</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:var(--mu)">${fmt(kpiBlank)} <span style="color:var(--mu);font-size:.65rem">(${kpiBlankPct}%)</span></span>
+      </div>
+    </div>`;
 
   // ALL cities - no limit
   const allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();
@@ -1870,6 +1890,10 @@ function renderPerf(){
       const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
       return d!==null&&d<=7;
     }).length;
+    const kpiOk10City=xongSub.filter(r=>{
+      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+      return d!==null&&d<=10;
+    }).length;
     const dv=xongSub.map(r=>{
       const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
       return d!==null&&d>=0&&d<500?d:null;
@@ -1878,7 +1902,9 @@ function renderPerf(){
     return{city,total:sub.length,xong:xongSub.length,pend,
       rate:+(xongSub.length/sub.length*100).toFixed(1),
       avgDays:avgD,kpiOk:kpiOkCity,
-      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0};
+      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0,
+      kpiOk10:kpiOk10City,
+      kpiRate10:xongSub.length?+(kpiOk10City/xongSub.length*100).toFixed(1):0};
   }).filter(Boolean).sort((a,b)=>b.total-a.total);
 
   cityTableData=cityStats;
@@ -1980,14 +2006,16 @@ function renderPerf(){
 
 function renderCityTable(){
   const sorted=[...cityTableData].sort((a,b)=>{
-    const va=Object.values(a)[cityTableSortCol]||0,vb=Object.values(b)[cityTableSortCol]||0;
+    const keys=['city','total','xong','pend','rate','avgDays','kpiRate','kpiRate10'];
+    const va=a[keys[cityTableSortCol]]||0,vb=b[keys[cityTableSortCol]]||0;
     return cityTableSortAsc?(va>vb?1:-1):(va<vb?1:-1);
   });
   const tbody=document.getElementById('pf-cityTbody');if(!tbody)return;
   tbody.innerHTML=sorted.map((d,i)=>{
     const cls=i===0?'city-rank-1':i===1?'city-rank-2':i===2?'city-rank-3':'city-rank-n';
-    const rateColor=d.rate>=15?'#3fb950':d.rate>=8?'#e3b341':'#f78166';
-    const dayColor=d.avgDays<=20?'#3fb950':d.avgDays<=50?'#e3b341':'#f78166';
+    const dayColor=d.avgDays<=7?'#3fb950':d.avgDays<=20?'#e3b341':'#f78166';
+    const kpi7Cls=d.kpiRate>=70?'rate-hi':d.kpiRate>=40?'rate-mid':'rate-lo';
+    const kpi10Cls=d.kpiRate10>=80?'rate-hi':d.kpiRate10>=50?'rate-mid':'rate-lo';
     return`<tr>
       <td style="display:flex;align-items:center;gap:7px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace">${fmt(d.total)}</td>
@@ -1995,9 +2023,18 @@ function renderCityTable(){
       <td style="text-align:center;color:var(--a1);font-family:'JetBrains Mono',monospace">${fmt(d.pend)}</td>
       <td style="text-align:center"><span class="rate-badge ${d.rate>=15?'rate-hi':d.rate>=8?'rate-mid':'rate-lo'}">${d.rate}%</span></td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:${dayColor}">${d.avgDays>0?d.avgDays+'d':'—'}</td>
-      <td><div class="stack-bar" style="min-width:100px">
-        <div class="stack-seg" style="width:${d.total?d.xong/d.total*100:0}%;background:#3fb95088"></div>
-        <div class="stack-seg" style="width:${d.total?d.pend/d.total*100:0}%;background:#f7816688"></div>
+      <td style="text-align:center;background:rgba(63,185,80,.04)">
+        <span class="rate-badge ${kpi7Cls}">${d.kpiRate}%</span>
+        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk)}/${fmt(d.xong)}</div>
+      </td>
+      <td style="text-align:center;background:rgba(88,166,255,.04)">
+        <span class="rate-badge ${kpi10Cls}">${d.kpiRate10}%</span>
+        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk10)}/${fmt(d.xong)}</div>
+      </td>
+      <td><div class="stack-bar" style="min-width:90px">
+        <div class="stack-seg" style="width:${d.xong?d.kpiOk/d.xong*100:0}%;background:#3fb95099" title="≤7d: ${d.kpiRate}%"></div>
+        <div class="stack-seg" style="width:${d.xong?(d.kpiOk10-d.kpiOk)/d.xong*100:0}%;background:#58a6ff88" title="≤10d: ${d.kpiRate10}%"></div>
+        <div class="stack-seg" style="width:${d.xong?(d.xong-d.kpiOk10)/d.xong*100:0}%;background:#f7816655" title=">10d"></div>
       </div></td>
     </tr>`;
   }).join('');
