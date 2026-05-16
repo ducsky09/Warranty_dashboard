@@ -13,16 +13,17 @@
 body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
 
 /* ── UPLOAD ── */
-#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px}
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:32px 20px;overflow-y:auto}
 .up-logo{font-size:2.6rem;font-weight:800;color:var(--a1);letter-spacing:-0.04em;margin-bottom:6px}
 .up-sub{color:var(--mu);font-size:0.85rem;margin-bottom:36px}
-.source-tabs{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:22px;width:520px}
+.source-tabs{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:22px;width:560px}
 .src-tab{flex:1;padding:10px 16px;background:transparent;border:none;color:var(--mu);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
 .src-tab.active{background:var(--a2);color:#0d1117}
-.src-pane{display:none;width:520px}
+.src-pane{display:none;width:560px}
 .src-pane.active{display:block}
-.drop-zone{border:2px dashed var(--bd);border-radius:14px;padding:36px 28px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.drop-zone{border:2px dashed var(--bd);border-radius:14px;padding:22px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
 .drop-zone:hover,.drop-zone.drag{border-color:var(--a2);background:rgba(88,166,255,.05)}
+.drop-zone .drop-icon,.drop-zone .drop-title,.drop-zone .drop-hint{pointer-events:none}
 .drop-icon{font-size:2.4rem;margin-bottom:10px;opacity:.4}
 .drop-title{font-size:.98rem;font-weight:700;margin-bottom:7px}
 .drop-hint{font-size:.73rem;color:var(--mu);line-height:1.6}
@@ -136,8 +137,6 @@ main{padding:18px 22px;max-width:1700px;margin:0 auto}
 /* sp table */
 .sp-table{width:100%;border-collapse:collapse;font-size:.72rem}
 .sp-table th{padding:6px 8px;text-align:left;font-size:.59rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);border-bottom:1px solid var(--bd)}
-.sp-table thead tr:first-child th{border-bottom:none}
-.sp-table thead tr:last-child th{border-bottom:1px solid var(--bd)}
 .sp-table td{padding:6px 8px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle}
 .sp-table tr:last-child td{border-bottom:none}
 .sp-table tr:hover td{background:rgba(255,255,255,.02)}
@@ -250,32 +249,66 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     <button class="src-tab" onclick="switchSrc('gsheet')">🟢 Google Sheets Live</button>
   </div>
   <div class="src-pane active" id="src-excel">
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <div class="drop-icon">📊</div>
-      <div class="drop-title">Kéo & thả file Excel vào đây</div>
-      <div class="drop-hint">Hỗ trợ .xlsx / .xls · Xử lý hoàn toàn trên trình duyệt</div>
-      <button class="btn-up" onclick="event.stopPropagation();document.getElementById('file-input').click()">Chọn file Excel</button>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <!-- File 1: PENDING -->
+      <div class="drop-zone" id="drop-zone-p" onclick="document.getElementById('file-input-p').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');handleFileDrop('p',event.dataTransfer.files[0])">
+        <div class="drop-icon">⏳</div>
+        <div class="drop-title">File PENDING</div>
+        <div class="drop-hint">Kéo & thả hoặc click chọn file PENDING.xlsx</div>
+        <button class="btn-up" style="background:var(--a1)" onclick="event.stopPropagation();document.getElementById('file-input-p').click()">Chọn file PENDING</button>
+        <div id="file-status-p" style="margin-top:8px;font-size:.72rem;color:var(--mu)">Chưa chọn file</div>
+      </div>
+      <!-- File 2: FINISHED -->
+      <div class="drop-zone" id="drop-zone-f" onclick="document.getElementById('file-input-f').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');handleFileDrop('f',event.dataTransfer.files[0])">
+        <div class="drop-icon">✅</div>
+        <div class="drop-title">File FINISHED</div>
+        <div class="drop-hint">Kéo & thả hoặc click chọn file FINISHED.xlsx</div>
+        <button class="btn-up" style="background:var(--a3)" onclick="event.stopPropagation();document.getElementById('file-input-f').click()">Chọn file FINISHED</button>
+        <div id="file-status-f" style="margin-top:8px;font-size:.72rem;color:var(--mu)">Chưa chọn file (không bắt buộc)</div>
+      </div>
+      <!-- Merge & Load -->
+      <button id="btn-merge-load" onclick="mergeAndLoad()"
+        style="width:100%;padding:11px;background:linear-gradient(135deg,var(--a2),#388bfd);color:#0d1117;border:none;border-radius:8px;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;opacity:.4;pointer-events:none;transition:opacity .2s">
+        ⚡ Ghép dữ liệu & Mở Dashboard
+      </button>
+      <div style="font-size:.68rem;color:var(--mu);text-align:center">Có thể tải chỉ file PENDING — FINISHED là tùy chọn</div>
     </div>
   </div>
   <div class="src-pane" id="src-gsheet">
     <div class="card" style="padding:18px">
       <div style="font-size:.84rem;font-weight:700;margin-bottom:12px">🔗 Kết nối Google Sheets</div>
-      <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">APPS SCRIPT WEB APP URL</div>
+      <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">APPS SCRIPT WEB APP URL <span style="color:var(--a3);font-weight:400">(đọc cả PENDING + FINISHED)</span></div>
       <input class="gs-url-input" id="gs-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbxxvOJjEWwLFmXDF-E6irCP4CGlWbUQ-VknYhAu5Qm27QKl6DtAojBby59i2a589OE/exec">
-      <button class="btn-gs" onclick="connectGSheet()" style="background:linear-gradient(135deg,#3fb950,#2ea043)">🔗 Kết nối Apps Script</button>
+      <button class="btn-gs" onclick="connectGSheet()" style="background:linear-gradient(135deg,#3fb950,#2ea043)">🔗 Kết nối Apps Script (cả 2 sheet)</button>
       <div class="gs-status" id="gs-status"></div>
       <div style="border-top:1px solid var(--bd);margin:12px 0 9px"></div>
-      <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">SHEET ID TRỰC TIẾP</div>
-      <div style="display:flex;gap:6px;margin-bottom:6px">
+      <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">SHEET ID TRỰC TIẾP – 2 GID (PENDING + FINISHED)</div>
+      <div style="display:flex;gap:6px;margin-bottom:4px">
         <input class="gs-url-input" id="gs-id-input" value="16AlgCE8HPeuflxm7PC0BqrvBo-Su1ONTPxE6i5VopHg" placeholder="Sheet ID" style="flex:1;margin-bottom:0">
-        <input class="gs-url-input" id="gs-gid-input" value="1905902989" placeholder="GID" style="width:110px;margin-bottom:0">
       </div>
-      <button class="btn-gs" onclick="connectGSheetCSV()" style="background:linear-gradient(135deg,#58a6ff,#388bfd)">📥 Tải CSV</button>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <div style="flex:1">
+          <div style="font-size:.62rem;color:var(--mu);margin-bottom:3px">GID trang PENDING</div>
+          <input class="gs-url-input" id="gs-gid-input" value="1905902989" placeholder="GID PENDING" style="margin-bottom:0">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:.62rem;color:var(--mu);margin-bottom:3px">GID trang FINISHED <span style="color:var(--a5)">(bỏ trống nếu không có)</span></div>
+          <input class="gs-url-input" id="gs-gid-finished" value="" placeholder="GID FINISHED" style="margin-bottom:0">
+        </div>
+      </div>
+      <button class="btn-gs" onclick="connectGSheetCSV()" style="background:linear-gradient(135deg,#58a6ff,#388bfd)">📥 Tải CSV (PENDING + FINISHED ghép lại)</button>
       <div class="gs-status" id="gs-status2"></div>
       <div id="gs-debug"></div>
     </div>
   </div>
-  <input type="file" id="file-input" accept=".xlsx,.xls">
+  <input type="file" id="file-input-p" accept=".xlsx,.xls" onchange="handleFileDrop('p',this.files[0])" style="display:none">
+  <input type="file" id="file-input-f" accept=".xlsx,.xls" onchange="handleFileDrop('f',this.files[0])" style="display:none">
   <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
   <div class="err-msg" id="err-msg"></div>
   <div class="up-note">Dữ liệu không gửi lên server — xử lý trực tiếp trên trình duyệt</div>
@@ -557,7 +590,7 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     <div class="kpi" style="--lc:var(--a5)"><div class="kpi-ico">⏱</div><div class="kpi-lbl">TB ngày sửa (KTV)</div><div class="kpi-val" id="pf-k-avgdays" style="color:var(--a5)">—</div><div class="kpi-sub">Ngày / phiếu</div></div>
     <div class="kpi" style="--lc:var(--a4)"><div class="kpi-ico">📦</div><div class="kpi-lbl">Tồn đọng hiện tại</div><div class="kpi-val" id="pf-k-ton" style="color:var(--a4)">—</div><div class="kpi-sub">Chưa hoàn thành</div></div>
     <div class="kpi" style="--lc:var(--a3)"><div class="kpi-ico">🎯</div><div class="kpi-lbl">Tỉ lệ hoàn thành</div><div class="kpi-val" id="pf-k-rate" style="color:var(--a3)">—</div><div class="kpi-sub">% xong / tổng</div></div>
-    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% đúng hạn ≤7d / tổng tiếp nhận</div></div>
+    <div class="kpi" style="--lc:var(--a1)"><div class="kpi-ico">🏆</div><div class="kpi-lbl">KPI đúng hạn</div><div class="kpi-val" id="pf-k-kpi" style="color:var(--a1)">—</div><div class="kpi-sub">% xong ≤ 7 ngày</div></div>
   </div>
 
   <!-- Bộ lọc nhẹ cho hiệu suất -->
@@ -614,13 +647,12 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
       <div style="height:200px"><canvas id="pf-cAvgNhom"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Phân bổ thời gian xử lý <small>0–7 · 8–10 · 11–15 · 16–30 · 31–60 · >60 ngày</small></div>
+      <div class="card-title">Phân bổ thời gian xử lý <small>Ngày sửa chữa</small></div>
       <div style="height:200px"><canvas id="pf-cDayDist"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">KPI đúng hạn <small>Tạo phiếu → KTV sửa xong</small></div>
-      <div style="height:170px"><canvas id="pf-cKpi"></canvas></div>
-      <div id="pf-kpi-legend" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;justify-content:center"></div>
+      <div class="card-title">KPI đúng hạn <small>OK = Ngày KTV xong − Ngày tạo ≤ 7 ngày</small></div>
+      <div style="height:200px"><canvas id="pf-cKpi"></canvas></div>
     </div>
   </div>
 
@@ -639,27 +671,17 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
   <div class="gf"><div class="card">
     <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Tất cả thành phố · Click cột để sắp xếp</small></div>
     <div style="overflow-x:auto"><table class="sp-table" id="pf-cityTable">
-      <thead>
-        <tr style="border-bottom:none">
-          <th rowspan="2" onclick="sortCityTable(0)" style="cursor:pointer;vertical-align:middle"># Thành phố ↕</th>
-          <th rowspan="2" onclick="sortCityTable(1)" style="text-align:center;cursor:pointer;vertical-align:middle">Tổng ↕</th>
-          <th rowspan="2" onclick="sortCityTable(2)" style="text-align:center;cursor:pointer;vertical-align:middle">Đã xong ↕</th>
-          <th rowspan="2" onclick="sortCityTable(3)" style="text-align:center;cursor:pointer;vertical-align:middle">Pending ↕</th>
-          <th rowspan="2" onclick="sortCityTable(4)" style="text-align:center;cursor:pointer;vertical-align:middle">Tỉ lệ % ↕</th>
-          <th rowspan="2" onclick="sortCityTable(5)" style="text-align:center;cursor:pointer;vertical-align:middle">TB ngày ↕</th>
-          <th colspan="3" style="text-align:center;background:rgba(63,185,80,.08);color:var(--a3);font-size:.6rem;letter-spacing:.06em;border-bottom:1px solid rgba(63,185,80,.2)">⏱ KPI ĐÚNG HẠN (tạo → KTV xong)</th>
-          <th colspan="3" style="text-align:center;background:rgba(248,81,73,.06);color:var(--a1);font-size:.6rem;letter-spacing:.06em;border-bottom:1px solid rgba(248,81,73,.2)">📊 CHỈ SỐ CHẤT LƯỢNG</th>
-          <th rowspan="2" style="min-width:110px;vertical-align:middle">Trực quan</th>
-        </tr>
-        <tr>
-          <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer;background:rgba(63,185,80,.06)" title="Số ca xong trong ≤7 ngày / Tổng ca tiếp nhận">≤7d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/tổng TN</div></th>
-          <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer;background:rgba(88,166,255,.06)" title="Số ca xong trong ≤10 ngày / Tổng ca tiếp nhận">≤10d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/tổng TN</div></th>
-          <th onclick="sortCityTable(8)" style="text-align:center;cursor:pointer;background:rgba(227,179,65,.06)" title="Số ca xong trong ≤15 ngày / Tổng ca tiếp nhận">≤15d ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">phiếu · %/tổng TN</div></th>
-          <th onclick="sortCityTable(9)" style="text-align:center;cursor:pointer;background:rgba(248,81,73,.05)" title="Pending: trạng thái Mới tạo quá 2 ngày HOẶC Chuyển trạm quá 3 ngày / Tổng ca tiếp nhận">🚨 Phiếu ảo ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">% / tổng TN</div></th>
-          <th onclick="sortCityTable(10)" style="text-align:center;cursor:pointer;background:rgba(210,168,255,.05)" title="Pending PLBH: Tính phí / Tính phí tại nhà / Bán linh kiện / Từ chối BH / Trôi bảo hành hãng (còn pending) / Tổng ca tiếp nhận">🚫 Không ĐK BH ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">% / tổng TN</div></th>
-          <th onclick="sortCityTable(11)" style="text-align:center;cursor:pointer;background:rgba(255,166,87,.05)" title="Hàng kho có Ngày KTV đề xuất LK trong ≤3 ngày kể từ ngày tạo / Tổng ca hàng kho tiếp nhận">📦 Kho đặt LK ↕<div style="font-size:.52rem;font-weight:400;color:var(--mu)">≤3d · %/tổng kho</div></th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th onclick="sortCityTable(0)" style="cursor:pointer"># Thành phố ↕</th>
+        <th onclick="sortCityTable(1)" style="text-align:center;cursor:pointer">Tổng ↕</th>
+        <th onclick="sortCityTable(2)" style="text-align:center;cursor:pointer">Đã xong ↕</th>
+        <th onclick="sortCityTable(3)" style="text-align:center;cursor:pointer">Pending ↕</th>
+        <th onclick="sortCityTable(4)" style="text-align:center;cursor:pointer">Tỉ lệ % ↕</th>
+        <th onclick="sortCityTable(5)" style="text-align:center;cursor:pointer">TB ngày ↕</th>
+        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer">KPI ≤7d ↕</th>
+        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer">% KPI ↕</th>
+        <th style="min-width:120px">Trực quan</th>
+      </tr></thead>
       <tbody id="pf-cityTbody"></tbody>
     </table></div>
   </div></div>
@@ -795,6 +817,10 @@ const CH={};
 let wpNhChart=null,hkpChart=null,hkhopChart=null;
 let GS_MODE=false,GS_URL='',GS_INTERVAL=null,LAST_RC=0;
 let curWeek=null,curWYear=null,wpSrcRows=[];
+let EXCEL_ROWS_P=null,EXCEL_ROWS_F=null;
+// Performance tab state — must be declared globally
+let pfView='week';
+let cityTableData=[],cityTableSortCol=1,cityTableSortAsc=false;
 
 // ═══ UTILS ═══
 const fmt=n=>Number(n||0).toLocaleString('vi-VN');
@@ -1487,7 +1513,14 @@ function resetApp(){
   closeWeekPanel();closePanel('hk');closePanel('hkho');
   if(wpNhChart){wpNhChart.destroy();wpNhChart=null;}
   Object.values(CH).forEach(c=>c?.destroy());Object.keys(CH).forEach(k=>delete CH[k]);
-  document.getElementById('file-input').value='';
+  const fp=document.getElementById('file-input-p');if(fp)fp.value='';
+  const ff=document.getElementById('file-input-f');if(ff)ff.value='';
+  // Reset dual-upload state
+  EXCEL_ROWS_P=null;EXCEL_ROWS_F=null;
+  set$('file-status-p','Chưa chọn file');set$('file-status-f','Chưa chọn file (không bắt buộc)');
+  const dz1=document.getElementById('drop-zone-p'),dz2=document.getElementById('drop-zone-f');
+  if(dz1)dz1.style.borderColor='';if(dz2)dz2.style.borderColor='';
+  const mb=document.getElementById('btn-merge-load');if(mb){mb.style.opacity='.4';mb.style.pointerEvents='none';}
   ALL_ROWS=[];FILT.tq=[];FILT.hk=[];FILT.hkho=[];
   switchTab('tq');
 }
@@ -1502,9 +1535,9 @@ function showSt(id,msg,type){const el=document.getElementById(id);if(!el)return;
 function tryJSONP(url,ms=12000){return new Promise((res,rej)=>{const cb='__gs_'+Date.now(),el=document.createElement('script');let done=false;
   const cleanup=()=>{done=true;delete window[cb];el.parentNode&&el.parentNode.removeChild(el);};
   window[cb]=(d)=>{cleanup();res(d);};el.onerror=()=>{cleanup();rej(new Error('Script error'));};
-  el.src=url+'?action=getData&callback='+cb+'&t='+Date.now();
+  el.src=url+'?action=getAllData&callback='+cb+'&t='+Date.now();
   setTimeout(()=>{if(!done){cleanup();rej(new Error('Timeout'));}},ms);document.head.appendChild(el);});}
-async function tryFetch(url){const r=await fetch(url+'?action=getData&t='+Date.now(),{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(j.error)throw new Error(j.error);if(!j.data?.length)throw new Error('No data');return j;}
+async function tryFetch(url){const r=await fetch(url+'?action=getAllData&t='+Date.now(),{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(j.error)throw new Error(j.error);if(!j.pending&&!j.data)throw new Error('No data');return j;}
 const PROXIES=[(s,g)=>`https://corsproxy.io/?${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${s}/export?format=csv&gid=${g}`)}`,
   (s,g)=>`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${s}/export?format=csv&gid=${g}`)}`];
 async function tryCSVProxy(sid,gid){for(let i=0;i<PROXIES.length;i++){try{const r=await fetch(PROXIES[i](sid,gid),{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);const t=await r.text();if(t.length<50||t.includes('<!DOCTYPE'))throw new Error('Not CSV');const rows=parseCSV(t);if(rows.length<2)throw new Error('<2 rows');gsLog(`Proxy ${i+1} OK`);return rows;}catch(e){gsLog(`Proxy ${i+1} fail: ${e.message}`);}}throw new Error('All proxies failed');}
@@ -1512,37 +1545,185 @@ function parseCSV(text){const lines=text.replace(/\r/g,'').split('\n').filter(l=
   const hdr=parseCSVLine(lines[0]),rows=[];
   for(let i=1;i<lines.length;i++){const vals=parseCSVLine(lines[i]);if(vals.every(v=>!v.trim()))continue;const obj={};hdr.forEach((h,j)=>obj[h.trim()]=(vals[j]||'').trim());rows.push(obj);}return rows;}
 function parseCSVLine(line){const res=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}else if(c===','&&!q){res.push(cur);cur='';}else cur+=c;}res.push(cur);return res;}
-async function connectGSheet(){const url=document.getElementById('gs-url-input').value.trim();if(!url||!url.includes('script.google.com')){showSt('gs-status','⚠ URL không hợp lệ','err');return;}
-  showSt('gs-status','⏳ Đang kết nối...','loading');document.getElementById('gs-debug').innerHTML='';
-  let json=null;try{json=await tryFetch(url);}catch(e1){gsLog('fetch: '+e1.message);try{json=await tryJSONP(url);}catch(e2){gsLog('JSONP: '+e2.message);showSt('gs-status','❌ '+e2.message+'\n👉 Redeploy với "Anyone"\n👉 Dùng New deployment','err');return;}}
-  if(!json?.data){showSt('gs-status','❌ Không có data','err');return;}
-  GS_MODE=true;GS_URL=url;showSt('gs-status',`✅ ${fmt(json.total||json.data.length)} dòng · Sheet: "${json.sheetName}" · ${json.lastUpdate||''}`,'ok');
-  setTimeout(()=>launchDashboard(json.data,`Google Sheets · ${json.sheetName}`),400);}
-async function connectGSheetCSV(){const sid=document.getElementById('gs-id-input').value.trim(),gid=document.getElementById('gs-gid-input').value.trim()||'0';
-  if(!sid){showSt('gs-status2','⚠ Nhập Sheet ID','err');return;}showSt('gs-status2','⏳ Thử CSV proxy...','loading');document.getElementById('gs-debug').innerHTML='';
-  try{const rows=await tryCSVProxy(sid,gid);GS_MODE=true;GS_URL=`CSV:${sid}:${gid}`;showSt('gs-status2',`✅ ${fmt(rows.length)} dòng`,'ok');setTimeout(()=>launchDashboard(rows,`Google Sheets CSV`),400);}
-  catch(err){showSt('gs-status2','❌ '+err.message+'\n👉 File → Share → Publish to web','err');}}
+
+// Merge rows: đánh dấu nguồn, tránh trùng, chuẩn hoá Status
+function mergeRows(pendingRows, finishedRows){
+  const merged=[];
+  // Tag pending rows — nếu chưa có Status thì gán Pending
+  pendingRows.forEach(r=>{
+    const row={...r};
+    if(!(row['Status']||'').trim()) row['Status']='Pending';
+    row['__src']='PENDING';
+    merged.push(row);
+  });
+  // Tag finished rows — nếu chưa có Status thì gán Xong
+  finishedRows.forEach(r=>{
+    const row={...r};
+    if(!(row['Status']||'').trim()) row['Status']='Xong';
+    row['__src']='FINISHED';
+    merged.push(row);
+  });
+  return merged;
+}
+
+// ── Apps Script (đọc action=getAllData trả về {pending:[...], finished:[...]} hoặc {data:[...]} ──
+async function connectGSheet(){
+  const url=document.getElementById('gs-url-input').value.trim();
+  if(!url||!url.includes('script.google.com')){showSt('gs-status','⚠ URL không hợp lệ','err');return;}
+  showSt('gs-status','⏳ Đang kết nối Apps Script (cả 2 sheet)...','loading');
+  document.getElementById('gs-debug').innerHTML='';
+  let json=null;
+  try{json=await tryFetch(url);}catch(e1){
+    gsLog('fetch: '+e1.message);
+    // fallback JSONP
+    try{
+      const cb='__gs_'+Date.now(),el=document.createElement('script');
+      json=await new Promise((res,rej)=>{
+        window[cb]=(d)=>{delete window[cb];el.remove();res(d);};
+        el.onerror=()=>{delete window[cb];el.remove();rej(new Error('Script error'));};
+        el.src=url+'?action=getAllData&callback='+cb+'&t='+Date.now();
+        setTimeout(()=>{delete window[cb];el.remove();rej(new Error('Timeout'));},14000);
+        document.head.appendChild(el);
+      });
+    }catch(e2){gsLog('JSONP: '+e2.message);showSt('gs-status','❌ '+e2.message+'\n👉 Redeploy Apps Script với "Anyone"\n👉 Xem hướng dẫn Apps Script bên dưới','err');return;}
+  }
+  if(!json){showSt('gs-status','❌ Không nhận được dữ liệu','err');return;}
+  // Hỗ trợ 2 định dạng trả về:
+  // 1) {pending:[...], finished:[...], ...}  ← mới (getAllData)
+  // 2) {data:[...], sheetName:'...'}          ← cũ (getData)
+  let rows=[];
+  if(json.pending){
+    const p=json.pending||[];const f=json.finished||[];
+    rows=mergeRows(p,f);
+    showSt('gs-status',`✅ PENDING: ${fmt(p.length)} · FINISHED: ${fmt(f.length)} · Tổng: ${fmt(rows.length)} · ${json.lastUpdate||''}`, 'ok');
+  } else if(json.data){
+    // Cũ: chỉ có 1 sheet → coi là PENDING
+    rows=mergeRows(json.data,[]);
+    showSt('gs-status',`✅ ${fmt(rows.length)} dòng (chỉ đọc 1 sheet) · Sheet: "${json.sheetName||''}" · ${json.lastUpdate||''}\n⚠ Cập nhật Apps Script để đọc cả FINISHED`,'ok');
+  } else {
+    showSt('gs-status','❌ Định dạng dữ liệu không hợp lệ','err');return;
+  }
+  GS_MODE=true;GS_URL=url;
+  setTimeout(()=>launchDashboard(rows,'Google Sheets · PENDING+FINISHED'),400);
+}
+
+// ── CSV trực tiếp: tải 2 GID song song ──
+async function connectGSheetCSV(){
+  const sid=document.getElementById('gs-id-input').value.trim();
+  const gidP=document.getElementById('gs-gid-input').value.trim()||'0';
+  const gidF=(document.getElementById('gs-gid-finished').value||'').trim();
+  if(!sid){showSt('gs-status2','⚠ Nhập Sheet ID','err');return;}
+  showSt('gs-status2','⏳ Đang tải CSV...','loading');
+  document.getElementById('gs-debug').innerHTML='';
+  try{
+    const [rowsP, rowsF]=await Promise.all([
+      tryCSVProxy(sid,gidP),
+      gidF?tryCSVProxy(sid,gidF).catch(e=>{gsLog('FINISHED CSV fail: '+e.message);return[];})
+           :Promise.resolve([])
+    ]);
+    const rows=mergeRows(rowsP,rowsF);
+    GS_MODE=true;GS_URL=`CSV:${sid}:${gidP}:${gidF}`;
+    showSt('gs-status2',`✅ PENDING: ${fmt(rowsP.length)} · FINISHED: ${fmt(rowsF.length)} · Tổng: ${fmt(rows.length)}`,'ok');
+    setTimeout(()=>launchDashboard(rows,'Google Sheets CSV · PENDING+FINISHED'),400);
+  }catch(err){showSt('gs-status2','❌ '+err.message+'\n👉 File → Share → Publish to web','err');}
+}
+
 function toggleAutoRefresh(on){if(GS_INTERVAL){clearInterval(GS_INTERVAL);GS_INTERVAL=null;}if(on&&GS_MODE){const ms=parseInt(document.getElementById('arr-int').value);GS_INTERVAL=setInterval(()=>silentRefresh(),ms);}}
 function changeRefreshInterval(){if(document.getElementById('arr-chk').checked)toggleAutoRefresh(true);}
-async function silentRefresh(){if(!GS_MODE||!GS_URL)return;try{let rows=[];if(GS_URL.startsWith('CSV:')){const[,sid,gid]=GS_URL.split(':');rows=await tryCSVProxy(sid,gid);}else{let j=null;try{j=await tryFetch(GS_URL);}catch(e){try{j=await tryJSONP(GS_URL,8000);}catch(_){}}if(j)rows=j.data||[];}
-  if(!rows.length)return;if(rows.length!==LAST_RC){LAST_RC=rows.length;ALL_ROWS=rows;BASE.tq=[...rows];BASE.hk=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách');BASE.hkho=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng kho');
-  FILT.tq=[...BASE.tq];FILT.hk=[...BASE.hk];FILT.hkho=[...BASE.hkho];
-  renderTQ(FILT.tq);renderHK(FILT.hk);renderHKHO(FILT.hkho);renderTrend('tq');renderTrend('hk');renderTrend('hkho');
-  document.getElementById('hdr-sub').textContent=`Google Sheets · ${fmt(rows.length)} dòng · 🔄 ${new Date().toLocaleTimeString('vi-VN')}`;}}catch(e){console.warn(e.message);}}
+
+async function silentRefresh(){
+  if(!GS_MODE||!GS_URL)return;
+  try{
+    let rows=[];
+    if(GS_URL.startsWith('CSV:')){
+      const parts=GS_URL.split(':');// CSV:sid:gidP:gidF
+      const sid=parts[1],gidP=parts[2],gidF=parts[3]||'';
+      const [rowsP,rowsF]=await Promise.all([
+        tryCSVProxy(sid,gidP),
+        gidF?tryCSVProxy(sid,gidF).catch(()=>[]):Promise.resolve([])
+      ]);
+      rows=mergeRows(rowsP,rowsF);
+    }else{
+      let j=null;try{j=await tryFetch(GS_URL);}catch(e){try{
+        const cb='__gs_'+Date.now(),el=document.createElement('script');
+        j=await new Promise((res,rej)=>{window[cb]=(d)=>{delete window[cb];el.remove();res(d);};el.onerror=()=>{delete window[cb];el.remove();rej();};el.src=GS_URL+'?action=getAllData&callback='+cb+'&t='+Date.now();setTimeout(()=>{delete window[cb];el.remove();rej();},8000);document.head.appendChild(el);});
+      }catch(_){}}
+      if(j){rows=j.pending?mergeRows(j.pending||[],j.finished||[]):(j.data?mergeRows(j.data,[]):[]);}
+    }
+    if(!rows.length)return;
+    if(rows.length!==LAST_RC){
+      LAST_RC=rows.length;ALL_ROWS=rows;
+      BASE.tq=[...rows];BASE.hk=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng khách');BASE.hkho=rows.filter(r=>(r['Loại kho']||'').trim()==='Hàng kho');
+      FILT.tq=[...BASE.tq];FILT.hk=[...BASE.hk];FILT.hkho=[...BASE.hkho];
+      renderTQ(FILT.tq);renderHK(FILT.hk);renderHKHO(FILT.hkho);renderTrend('tq');renderTrend('hk');renderTrend('hkho');
+      document.getElementById('hdr-sub').textContent=`Google Sheets · ${fmt(rows.length)} dòng · 🔄 ${new Date().toLocaleTimeString('vi-VN')}`;
+    }
+  }catch(e){console.warn(e.message);}
+}
 async function manualRefresh(){const btn=document.getElementById('btn-refresh');btn.textContent='⏳';btn.disabled=true;await silentRefresh();btn.textContent='🔄 Cập nhật';btn.disabled=false;}
 function launchDashboard(rows,name){LAST_RC=rows.length;initDashboard(rows,name);if(GS_MODE){document.getElementById('bdg-source').style.display='';document.getElementById('btn-refresh').style.display='flex';document.getElementById('arr-wrap').style.display='flex';}}
 
-// ═══ FILE UPLOAD ═══
-function handleFile(file){if(!file)return;
-  if(!['xlsx','xls'].includes(file.name.split('.').pop().toLowerCase())){document.getElementById('err-msg').textContent='Chỉ hỗ trợ .xlsx/.xls';document.getElementById('err-msg').style.display='block';return;}
+// ═══ FILE UPLOAD (2 files) ═══
+
+function readXlsx(file){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        res(rows);
+      }catch(err){rej(err);}
+    };
+    reader.onerror=()=>rej(new Error('Đọc file thất bại'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function handleFileDrop(slot,file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls'].includes(ext)){
+    document.getElementById('err-msg').textContent='Chỉ hỗ trợ .xlsx/.xls';
+    document.getElementById('err-msg').style.display='block';return;
+  }
   document.getElementById('err-msg').style.display='none';
-  const pb=document.getElementById('prog-bar'),pf=document.getElementById('prog-fill');pb.style.display='block';pf.style.width='20%';
-  const reader=new FileReader();
-  reader.onload=e=>{try{pf.style.width='60%';const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});pf.style.width='85%';
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});pf.style.width='100%';
-    if(!rows.length){pb.style.display='none';return;}setTimeout(()=>{pb.style.display='none';GS_MODE=false;launchDashboard(rows,file.name);},300);}
-  catch(err){pb.style.display='none';document.getElementById('err-msg').textContent='Lỗi: '+err.message;document.getElementById('err-msg').style.display='block';}};
-  reader.readAsArrayBuffer(file);}
+  const statusId=`file-status-${slot}`;
+  const dzId=`drop-zone-${slot}`;
+  set$(statusId,'⏳ Đang đọc...');
+  readXlsx(file).then(rows=>{
+    if(slot==='p'){EXCEL_ROWS_P=rows;set$(statusId,`✅ ${file.name} · ${fmt(rows.length)} dòng`);}
+    else{EXCEL_ROWS_F=rows;set$(statusId,`✅ ${file.name} · ${fmt(rows.length)} dòng`);}
+    const dz=document.getElementById(dzId);
+    if(dz) dz.style.borderColor=slot==='p'?'var(--a1)':'var(--a3)';
+    updateMergeBtn();
+  }).catch(err=>{
+    set$(statusId,'❌ Lỗi: '+err.message);
+  });
+}
+
+function updateMergeBtn(){
+  const mb=document.getElementById('btn-merge-load');if(!mb)return;
+  const ready=EXCEL_ROWS_P&&EXCEL_ROWS_P.length>0;
+  mb.style.opacity=ready?'1':'.4';
+  mb.style.pointerEvents=ready?'auto':'none';
+}
+
+function mergeAndLoad(){
+  if(!EXCEL_ROWS_P||!EXCEL_ROWS_P.length){
+    document.getElementById('err-msg').textContent='Cần chọn ít nhất file PENDING';
+    document.getElementById('err-msg').style.display='block';return;
+  }
+  const pb=document.getElementById('prog-bar'),pf=document.getElementById('prog-fill');
+  pb.style.display='block';pf.style.width='40%';
+  const finRows=EXCEL_ROWS_F||[];
+  const rows=mergeRows(EXCEL_ROWS_P,finRows);
+  pf.style.width='100%';
+  const label=finRows.length
+    ?`PENDING (${fmt(EXCEL_ROWS_P.length)}) + FINISHED (${fmt(finRows.length)})`
+    :`PENDING only (${fmt(EXCEL_ROWS_P.length)})`;
+  setTimeout(()=>{pb.style.display='none';GS_MODE=false;launchDashboard(rows,label);},300);
+}
 
 
 /* parse date string dd/MM/yyyy or ISO */
@@ -1815,7 +1996,7 @@ function renderPerf(){
   set$('pf-k-rate',pct(totalDone,total));
   set$('pf-k-ton',fmt(total-totalDone));
   set$('pf-k-avgdays',avgDays+' ngày');
-  set$('pf-k-kpi',pct(kpiOK,total||1));
+  set$('pf-k-kpi',pct(kpiOK,totalDone||1));
 
   // Init year select (only first time)
   const yrSel=document.getElementById('pf-sel-year');
@@ -1841,12 +2022,13 @@ function renderPerf(){
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{color:'#1c2230'},border:{display:false},title:{display:true,text:'Ngày',font:{size:10},color:'#7d8590'}}}}});
 
   // Day distribution
-  const buckets={'0-7 ngày':0,'8-10 ngày':0,'11-15 ngày':0,'16-30 ngày':0,'31-60 ngày':0,'>60 ngày':0};
+  const buckets={'0 ngày':0,'1-3 ngày':0,'4-7 ngày':0,'8-14 ngày':0,'15-30 ngày':0,'31-60 ngày':0,'>60 ngày':0};
   dayVals.forEach(d=>{
-    if(d<=7)buckets['0-7 ngày']++;
-    else if(d<=10)buckets['8-10 ngày']++;
-    else if(d<=15)buckets['11-15 ngày']++;
-    else if(d<=30)buckets['16-30 ngày']++;
+    if(d===0)buckets['0 ngày']++;
+    else if(d<=3)buckets['1-3 ngày']++;
+    else if(d<=7)buckets['4-7 ngày']++;
+    else if(d<=14)buckets['8-14 ngày']++;
+    else if(d<=30)buckets['15-30 ngày']++;
     else if(d<=60)buckets['31-60 ngày']++;
     else buckets['>60 ngày']++;
   });
@@ -1854,105 +2036,43 @@ function renderPerf(){
   const ctx4=document.getElementById('pf-cDayDist')?.getContext('2d');
   if(ctx4) CH['pf-cDayDist']=new Chart(ctx4,{type:'doughnut',
     data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),
-      backgroundColor:['#3fb950','#56d364','#e3b341','#ffa657','#f78166','#f85149'],
+      backgroundColor:['#3fb950','#56d364','#e3b341','#ffa657','#f78166','#f85149','#7d8590'],
       borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
       plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
-        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu (${dayVals.length?+(c.raw/dayVals.length*100).toFixed(1):0}%)`}}}}});
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu`}}}}});
 
-  // KPI donut (tao->xong <=7) — mẫu số = tổng tiếp nhận
+  // KPI donut (tao->xong <=7)
   dc('pf-cKpi');
   const ctx5=document.getElementById('pf-cKpi')?.getContext('2d');
-  const kpiOKpct=total?+(kpiOK/total*100).toFixed(1):0;
-  const kpiNOpct=total?+(kpiNo/total*100).toFixed(1):0;
-  const kpiBlankPct=total?+(kpiBlank/total*100).toFixed(1):0;
   if(ctx5) CH['pf-cKpi']=new Chart(ctx5,{type:'doughnut',
-    data:{labels:[`✅ Đúng hạn ≤7d (${kpiOKpct}%)`,`❌ Quá hạn >7d (${kpiNOpct}%)`,`⏳ Chưa xong (${kpiBlankPct}%)`],
+    data:{labels:['✅ ≤7 ngày (KPI OK)','❌ >7 ngày (KPI NO)','⏳ Chưa xong'],
       datasets:[{data:[kpiOK,kpiNo,kpiBlank],backgroundColor:['#3fb950','#f85149','#30363d'],
         borderColor:'#161b22',borderWidth:3,hoverOffset:8}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} phiếu (/${fmt(total)} TN)`}}}}});
-  // KPI summary legend — mẫu số = tổng tiếp nhận
-  const kpiLegEl=document.getElementById('pf-kpi-legend');
-  if(kpiLegEl) kpiLegEl.innerHTML=`
-    <div style="display:flex;flex-direction:column;gap:5px;width:100%">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25);border-radius:7px">
-        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#3fb950;display:inline-block"></span>✅ Đúng hạn ≤7 ngày</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:#3fb950">${fmt(kpiOK)} <span style="color:var(--mu);font-size:.65rem">(${kpiOKpct}% / tổng TN)</span></span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.25);border-radius:7px">
-        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#f85149;display:inline-block"></span>❌ Quá hạn >7 ngày (đã xong)</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:#f85149">${fmt(kpiNo)} <span style="color:var(--mu);font-size:.65rem">(${kpiNOpct}% / tổng TN)</span></span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(48,54,61,.35);border:1px solid var(--bd);border-radius:7px">
-        <span style="display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="width:8px;height:8px;border-radius:50%;background:#7d8590;display:inline-block"></span>⏳ Chưa có ngày xong</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:var(--mu)">${fmt(kpiBlank)} <span style="color:var(--mu);font-size:.65rem">(${kpiBlankPct}% / tổng TN)</span></span>
-      </div>
-    </div>`;
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}});
 
   // ALL cities - no limit
-  const NOW_MS=Date.now();
-  const PLBH_KHONG_DK=['tính phí','tính phí tại nhà','bán linh kiện','từ chối bh','trôi bảo hành hãng'];
   const allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();
   const cityStats=allCities.map(city=>{
     const sub=rows.filter(r=>(r['City']||'').trim()===city);
     if(!sub.length)return null;
-    const totalCity=sub.length; // mẫu số chính = tổng tiếp nhận
     const xongSub=sub.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null);
-    const pendRows=sub.filter(r=>(r['Status']||'').trim()==='Pending');
-    const pendTotal=pendRows.length;
-
-    // KPI ≤7, ≤10, ≤15 → mẫu số = tổng tiếp nhận (totalCity)
-    const kpiOkCity=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=7;}).length;
-    const kpiOk10City=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=10;}).length;
-    const kpiOk15City=xongSub.filter(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d<=15;}).length;
-    const kpiRate7=+(kpiOkCity/totalCity*100).toFixed(1);
-    const kpiRate10=+(kpiOk10City/totalCity*100).toFixed(1);
-    const kpiRate15=+(kpiOk15City/totalCity*100).toFixed(1);
-
-    // Phiếu ảo: pending MớiTạo>2d || ChuyểnTrạm>3d → mẫu số = tổng tiếp nhận
-    const phieuAoCnt=pendRows.filter(r=>{
-      const tt=(r['Trạng thái phiếu']||'').toLowerCase().trim();
-      const ngayTao=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
-      if(!ngayTao)return false;
-      const daysSince=Math.floor((NOW_MS-ngayTao.getTime())/(1000*60*60*24));
-      if(tt.includes('mới tạo')&&daysSince>2)return true;
-      if((tt.includes('chuyển trạm')||tt.includes('chuyen tram'))&&daysSince>3)return true;
-      return false;
+    const pend=sub.filter(r=>(r['Status']||'').trim()==='Pending').length;
+    const kpiOkCity=xongSub.filter(r=>{
+      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+      return d!==null&&d<=7;
     }).length;
-    const phieuAoRate=+(phieuAoCnt/totalCity*100).toFixed(1);
-
-    // Không đủ ĐK BH: pending PLBH tính phí... → mẫu số = tổng tiếp nhận
-    const khongDKCnt=pendRows.filter(r=>{
-      const pl=(r['Phân loại phiếu BH']||'').toLowerCase().trim();
-      return PLBH_KHONG_DK.some(k=>pl.includes(k));
-    }).length;
-    const khongDKRate=+(khongDKCnt/totalCity*100).toFixed(1);
-
-    // Hàng kho đặt LK ≤3 ngày → mẫu số = TỔNG hàng kho tiếp nhận (không lọc pending)
-    const khoAllRows=sub.filter(r=>{const lk=(r['Loại kho']||'').toLowerCase().trim();return lk.includes('hàng kho')||lk.includes('hang kho');});
-    const khoTotal=khoAllRows.length;
-    const khoLKOk=khoAllRows.filter(r=>{
-      const ngayDX=parseDate(r['Ngày KTV đề xuất LK'])||parseDate(r['Ngay KTV de xuat LK'])||parseDate(r['Ngày đề xuất LK'])||parseDate(r['Ngày KTV đặt LK'])||parseDate(r['Ngày đặt linh kiện'])||parseDate(r['Ngày đặt LK']);
-      const ngayTao=parseDate(r['Ngày tạo phiếu'])||parseDate(r['Ngày tiếp nhận']);
-      if(!ngayDX||!ngayTao)return false;
-      const diff=Math.round((ngayDX.getTime()-ngayTao.getTime())/(1000*60*60*24));
-      return diff>=0&&diff<=3;
-    }).length;
-    const khoLKRate=khoTotal?+(khoLKOk/khoTotal*100).toFixed(1):0;
-
-    const dv=xongSub.map(r=>{const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));return d!==null&&d>=0&&d<500?d:null;}).filter(d=>d!==null);
+    const dv=xongSub.map(r=>{
+      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
+      return d!==null&&d>=0&&d<500?d:null;
+    }).filter(d=>d!==null);
     const avgD=dv.length?+(dv.reduce((s,v)=>s+v,0)/dv.length).toFixed(1):0;
-    return{city,total:totalCity,xong:xongSub.length,pend:pendTotal,
-      rate:+(xongSub.length/totalCity*100).toFixed(1),
-      avgDays:avgD,
-      kpiOk:kpiOkCity,kpiRate:kpiRate7,
-      kpiOk10:kpiOk10City,kpiRate10,
-      kpiOk15:kpiOk15City,kpiRate15,
-      phieuAo:phieuAoCnt,phieuAoRate,
-      khongDK:khongDKCnt,khongDKRate,
-      khoTotal,khoLKOk,khoLKRate};
+    return{city,total:sub.length,xong:xongSub.length,pend,
+      rate:+(xongSub.length/sub.length*100).toFixed(1),
+      avgDays:avgD,kpiOk:kpiOkCity,
+      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0};
   }).filter(Boolean).sort((a,b)=>b.total-a.total);
 
   cityTableData=cityStats;
@@ -2053,80 +2173,36 @@ function renderPerf(){
 }
 
 function renderCityTable(){
-  const SORT_KEYS=['city','total','xong','pend','rate','avgDays','kpiRate','kpiRate10','kpiRate15','phieuAoRate','khongDKRate','khoLKRate'];
+  const SORT_KEYS=['city','total','xong','pend','rate','avgDays','kpiOk','kpiRate'];
+  const key=SORT_KEYS[cityTableSortCol]||'total';
   const sorted=[...cityTableData].sort((a,b)=>{
-    const va=a[SORT_KEYS[cityTableSortCol]]||0,vb=b[SORT_KEYS[cityTableSortCol]]||0;
-    // phiếu ảo (9) & không ĐK BH (10): thấp = tốt → sort tăng dần mặc định
-    const invert=cityTableSortCol===9||cityTableSortCol===10;
-    const asc=invert?!cityTableSortAsc:cityTableSortAsc;
-    return asc?(va>vb?1:-1):(va<vb?1:-1);
+    const va=a[key]??0, vb=b[key]??0;
+    if(typeof va==='string') return cityTableSortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    return cityTableSortAsc?(va-vb):(vb-va);
   });
   const tbody=document.getElementById('pf-cityTbody');if(!tbody)return;
   tbody.innerHTML=sorted.map((d,i)=>{
     const cls=i===0?'city-rank-1':i===1?'city-rank-2':i===2?'city-rank-3':'city-rank-n';
-    const dayColor=d.avgDays<=7?'#3fb950':d.avgDays<=15?'#e3b341':'#f78166';
-    // KPI thresholds: tính /tổng nên ngưỡng thấp hơn (nhiều phiếu chưa xong)
-    const kpi7Cls=d.kpiRate>=50?'rate-hi':d.kpiRate>=25?'rate-mid':'rate-lo';
-    const kpi10Cls=d.kpiRate10>=60?'rate-hi':d.kpiRate10>=35?'rate-mid':'rate-lo';
-    const kpi15Cls=d.kpiRate15>=70?'rate-hi':d.kpiRate15>=45?'rate-mid':'rate-lo';
-    // Phiếu ảo & không ĐK BH: thấp = tốt
-    const aoCls=d.phieuAoRate<=3?'rate-hi':d.phieuAoRate<=10?'rate-mid':'rate-lo';
-    const dkCls=d.khongDKRate<=3?'rate-hi':d.khongDKRate<=10?'rate-mid':'rate-lo';
-    // Kho đặt LK ≤3d: cao = tốt
-    const khoLKCls=d.khoLKRate>=80?'rate-hi':d.khoLKRate>=50?'rate-mid':'rate-lo';
+    const rateColor=d.rate>=15?'#3fb950':d.rate>=8?'#e3b341':'#f78166';
+    const dayColor=d.avgDays<=20?'#3fb950':d.avgDays<=50?'#e3b341':'#f78166';
     return`<tr>
-      <td style="display:flex;align-items:center;gap:7px;min-width:120px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
+      <td style="display:flex;align-items:center;gap:7px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace">${fmt(d.total)}</td>
       <td style="text-align:center;color:var(--a3);font-family:'JetBrains Mono',monospace">${fmt(d.xong)}</td>
       <td style="text-align:center;color:var(--a1);font-family:'JetBrains Mono',monospace">${fmt(d.pend)}</td>
       <td style="text-align:center"><span class="rate-badge ${d.rate>=15?'rate-hi':d.rate>=8?'rate-mid':'rate-lo'}">${d.rate}%</span></td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:${dayColor}">${d.avgDays>0?d.avgDays+'d':'—'}</td>
-      <td style="text-align:center;background:rgba(63,185,80,.04)" title="Xong ≤7d / Tổng TN: ${fmt(d.kpiOk)}/${fmt(d.total)}">
-        <span class="rate-badge ${kpi7Cls}">${d.kpiRate}%</span>
-        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk)}/${fmt(d.total)}</div>
-      </td>
-      <td style="text-align:center;background:rgba(88,166,255,.04)" title="Xong ≤10d / Tổng TN: ${fmt(d.kpiOk10)}/${fmt(d.total)}">
-        <span class="rate-badge ${kpi10Cls}">${d.kpiRate10}%</span>
-        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk10)}/${fmt(d.total)}</div>
-      </td>
-      <td style="text-align:center;background:rgba(227,179,65,.04)" title="Xong ≤15d / Tổng TN: ${fmt(d.kpiOk15)}/${fmt(d.total)}">
-        <span class="rate-badge ${kpi15Cls}">${d.kpiRate15}%</span>
-        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.kpiOk15)}/${fmt(d.total)}</div>
-      </td>
-      <td style="text-align:center;background:rgba(248,81,73,.04)" title="Pending Mới tạo>2d hoặc Chuyển trạm>3d / Tổng TN: ${fmt(d.phieuAo)}/${fmt(d.total)}">
-        <span class="rate-badge ${aoCls}">${d.phieuAoRate}%</span>
-        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.phieuAo)}/${fmt(d.total)}</div>
-      </td>
-      <td style="text-align:center;background:rgba(210,168,255,.04)" title="Pending PLBH Tính phí/Bán LK/Từ chối/Trôi BH / Tổng TN: ${fmt(d.khongDK)}/${fmt(d.total)}">
-        <span class="rate-badge ${dkCls}">${d.khongDKRate}%</span>
-        <div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.khongDK)}/${fmt(d.total)}</div>
-      </td>
-      <td style="text-align:center;background:rgba(255,166,87,.04)" title="Hàng kho KTV đề xuất LK ≤3d / Tổng hàng kho TN: ${fmt(d.khoLKOk)}/${fmt(d.khoTotal)}">
-        ${d.khoTotal>0?`<span class="rate-badge ${khoLKCls}">${d.khoLKRate}%</span><div style="font-size:.6rem;color:var(--mu);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(d.khoLKOk)}/${fmt(d.khoTotal)}</div>`:'<span style="color:var(--mu);font-size:.68rem">—</span>'}
-      </td>
-      <td>
-        <div class="stack-bar" style="min-width:90px;margin-bottom:3px" title="KPI /tổng TN: xanh=≤7d · vàng=7→15d · đỏ=>15d">
-          <div class="stack-seg" style="width:${d.kpiRate}%;background:#3fb95099"></div>
-          <div class="stack-seg" style="width:${Math.max(0,d.kpiRate15-d.kpiRate)}%;background:#e3b34188"></div>
-          <div class="stack-seg" style="width:${Math.max(0,d.rate-d.kpiRate15)}%;background:#f7816655"></div>
-        </div>
-        <div class="stack-bar" style="min-width:90px" title="Chất lượng /tổng TN: đỏ=phiếu ảo · tím=không ĐK BH">
-          <div class="stack-seg" style="width:${d.phieuAoRate}%;background:#f8514977"></div>
-          <div class="stack-seg" style="width:${d.khongDKRate}%;background:#d2a8ff88"></div>
-        </div>
-      </td>
+      <td><div class="stack-bar" style="min-width:100px">
+        <div class="stack-seg" style="width:${d.total?d.xong/d.total*100:0}%;background:#3fb95088"></div>
+        <div class="stack-seg" style="width:${d.total?d.pend/d.total*100:0}%;background:#f7816688"></div>
+      </div></td>
     </tr>`;
   }).join('');
 }
 
 function sortCityTable(col){
   if(cityTableSortCol===col)cityTableSortAsc=!cityTableSortAsc;
-  else{
-    cityTableSortCol=col;
-    // phiếu ảo (9) & không ĐK BH (10): mặc định sort tăng dần (vấn đề nổi lên đầu)
-    // kho đặt LK (11): mặc định sort giảm dần (tốt nhất lên đầu)
-    cityTableSortAsc=(col===9||col===10)?true:false;
-  }
+  else{cityTableSortCol=col;cityTableSortAsc=false;}
   renderCityTable();
 }
 
@@ -2162,10 +2238,62 @@ function initPerfFilters(rows){
   buildPfMonthWeekOpts();
 }
 
-const dz=document.getElementById('drop-zone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0]);});
+// drag-drop events are now inline on the drop-zone divs
+
+// Thêm vào phần <script> của index.html
+const CF_PAGE_SIZE = 5000;
+
+async function connectWorkers() {
+  const base = (document.getElementById('cf-url-input')?.value || '').trim()
+               .replace(/\/$/, '');
+  if (!base) { showSt('cf-status', '⚠ Nhập URL Workers', 'err'); return; }
+
+  showSt('cf-status', '⏳ Đang kết nối Cloudflare D1...', 'loading');
+
+  try {
+    // Kiểm tra health và lấy tổng số dòng trước
+    const hRes  = await fetch(`${base}/health`);
+    const hData = await hRes.json();
+    const total = hData.total_rows || 0;
+
+    showSt('cf-status', `⏳ Tải ${fmt(total)} dòng...`, 'loading');
+
+    // Tải song song PENDING và FINISHED theo từng page
+    const fetchSrc = async (src) => {
+      let all = [], offset = 0;
+      while (true) {
+        const r = await fetch(
+          `${base}/api/all?src=${src}&limit=${CF_PAGE_SIZE}&offset=${offset}`
+        );
+        const j = await r.json();
+        all = all.concat(j.rows || []);
+        if (!j.has_more) break;
+        offset += CF_PAGE_SIZE;
+        showSt('cf-status',
+          `⏳ ${src}: ${fmt(all.length)}/${fmt(j.total)}...`, 'loading');
+      }
+      return all;
+    };
+
+    const [pending, finished] = await Promise.all([
+      fetchSrc('PENDING'),
+      fetchSrc('FINISHED'),
+    ]);
+
+    const rows = mergeRows(pending, finished);
+    GS_MODE = true;
+    GS_URL  = `CF:${base}`;
+
+    showSt('cf-status',
+      `✅ PENDING: ${fmt(pending.length)} · FINISHED: ${fmt(finished.length)} · Tổng: ${fmt(rows.length)}`,
+      'ok');
+    setTimeout(() => launchDashboard(rows, 'Cloudflare D1 · PENDING+FINISHED'), 400);
+
+  } catch (e) {
+    showSt('cf-status', '❌ ' + e.message, 'err');
+  }
+}
+```
 </script>
 </body>
 </html>
