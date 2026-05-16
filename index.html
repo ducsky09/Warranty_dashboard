@@ -281,7 +281,19 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     </div>
   </div>
   <div class="src-pane" id="src-gsheet">
-    <div class="card" style="padding:18px">
+			<div class="card" style="padding:18px">
+			<div style="border-top:1px solid var(--bd);margin:12px 0 9px"></div>
+		<div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">
+		  CLOUDFLARE WORKERS URL
+		</div>
+		<input class="gs-url-input" id="cf-url-input"
+		  placeholder="https://warranty-api.YOUR_SUBDOMAIN.workers.dev"
+		  value="">
+		<button class="btn-gs" onclick="connectWorkers()"
+		  style="background:linear-gradient(135deg,#f38020,#e05c0a)">
+		  ☁️ Kết nối Cloudflare D1
+		</button>
+		<div class="gs-status" id="cf-status"></div>	
       <div style="font-size:.84rem;font-weight:700;margin-bottom:12px">🔗 Kết nối Google Sheets</div>
       <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:5px">APPS SCRIPT WEB APP URL <span style="color:var(--a3);font-weight:400">(đọc cả PENDING + FINISHED)</span></div>
       <input class="gs-url-input" id="gs-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbxxvOJjEWwLFmXDF-E6irCP4CGlWbUQ-VknYhAu5Qm27QKl6DtAojBby59i2a589OE/exec">
@@ -1635,6 +1647,23 @@ async function silentRefresh(){
   if(!GS_MODE||!GS_URL)return;
   try{
     let rows=[];
+	if (GS_URL.startsWith('CF:')) {
+	  const base = GS_URL.slice(3);
+	  const fetchSrc = async (src) => {
+		let all = [], offset = 0;
+		while (true) {
+		  const r = await fetch(`${base}/api/all?src=${src}&limit=${CF_PAGE_SIZE}&offset=${offset}`);
+		  const j = await r.json();
+		  all = all.concat(j.rows || []);
+		  if (!j.has_more) break;
+		  offset += CF_PAGE_SIZE;
+		}
+		return all;
+	  };
+	  const [p, f] = await Promise.all([fetchSrc('PENDING'), fetchSrc('FINISHED')]);
+	  rows = mergeRows(p, f);
+	}
+	
     if(GS_URL.startsWith('CSV:')){
       const parts=GS_URL.split(':');// CSV:sid:gidP:gidF
       const sid=parts[1],gidP=parts[2],gidF=parts[3]||'';
@@ -2240,7 +2269,6 @@ function initPerfFilters(rows){
 
 // drag-drop events are now inline on the drop-zone divs
 
-// Thêm vào phần <script> của index.html
 const CF_PAGE_SIZE = 5000;
 
 async function connectWorkers() {
@@ -2293,7 +2321,7 @@ async function connectWorkers() {
     showSt('cf-status', '❌ ' + e.message, 'err');
   }
 }
-```
+
 </script>
 </body>
 </html>
