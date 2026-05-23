@@ -1,0 +1,37 @@
+BƯỚC 1 — Tạo bảng trên Supabase
+
+Đăng nhập supabase.com → vào project của bạn
+Click SQL Editor → New query
+Dán toàn bộ nội dung supabase_schema.sql vào → click Run
+Kết quả: bảng warranty_tickets + upload_log + view v_dashboard được tạo
+
+
+BƯỚC 2 — Lấy thông tin kết nối
+Vào Project Settings → API:
+
+Project URL: https://xxxx.supabase.co → copy
+anon public key: chuỗi dài bắt đầu eyJ... → copy
+
+
+BƯỚC 3 — Upload dữ liệu Excel lên Supabase
+Mở upload_to_supabase.py, sửa 2 dòng đầu phần CẤU HÌNH:
+pythonSUPABASE_URL = "https://xxxx.supabase.co"   # ← URL của bạn
+SUPABASE_KEY = "eyJhbGci..."                 # ← anon key
+Chạy lệnh (để PENDING.xlsx và FINISHED.xlsx cùng thư mục):
+bash# Lần đầu: xoá sạch rồi upload cả 2 file
+python upload_to_supabase.py --clear
+
+# Chỉ cập nhật PENDING (khi có data mới)
+python upload_to_supabase.py --file PENDING --clear
+
+# Chỉ cập nhật FINISHED
+python upload_to_supabase.py --file FINISHED --clear
+
+BƯỚC 4 — Mở Dashboard và kết nối
+Mở index_supabase.html → tab 🟩 Supabase → điền URL + Key → Kết nối & Tải dữ liệu.
+Credentials tự lưu vào localStorage — lần sau mở là tự điền sẵn.
+
+Cập nhật dữ liệu định kỳ (thủ công)
+Mỗi khi có file Excel mới, chạy:
+bashpython upload_to_supabase.py --file PENDING --clear
+Sau đó trong dashboard bấm 🔄 Cập nhật hoặc bật Auto-refresh.
