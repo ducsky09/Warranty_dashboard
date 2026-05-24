@@ -2294,30 +2294,133 @@ function sbClearSaved(){
   document.getElementById('sb-status').style.display='none';
 }
 
-/* Fetch all rows in pages of 1000 */
-async function sbFetchAllRows(onProgress){
+/* ═══════════════════════════════════════════════════════════
+   sbFetchAllRows — FIXED v3
+   ─────────────────────────────────────────────────────────
+   ROOT CAUSE của số liệu khác nhau mỗi lần:
+     • Supabase REST + .order('id') + .range() trên bảng lớn
+       trả về rows theo thứ tự NGẪU NHIÊN mỗi request
+       → rows ở ranh giới page bị duplicate hoặc bỏ sót
+     • Dedup Map dùng Math.random() khi thiếu ma_phieu_bh
+       → mỗi lần dedup cho kết quả khác nhau
+
+   GIẢI PHÁP: Fetch riêng từng source_file (PENDING / FINISHED)
+     → mỗi nhóm nhỏ hơn, stable hơn
+     → sau đó merge theo quy tắc: Pending > Xong, ngày mới nhất
+   ═══════════════════════════════════════════════════════════ */
+
+// Fetch 1 nhóm source_file theo pages, có retry
+async function _fetchGroup(sourceFile, onProgress, offsetStart=0){
   const PAGE = 1000;
-  let allRows = [];
-  let from = 0;
-  // First: get total count
+  let rows = [];
+  let from = offsetStart;
+
+  // Đếm số rows của nhóm này
   const { count, error: ce } = await sbClient
     .from('warranty_tickets')
-    .select('*', { count: 'exact', head: true });
-  if(ce) throw new Error(ce.message);
+    .select('*', { count:'exact', head:true })
+    .eq('source_file', sourceFile);
+  if(ce) throw new Error(`Count ${sourceFile}: ${ce.message}`);
   const total = count || 0;
-  if(total === 0) return [];
+  if(total === 0) return { rows:[], total:0 };
 
+  let fails = 0;
   while(from < total){
+    const to = from + PAGE - 1;
+
+    // Dùng id range thay vì .range() để tránh offset instability
+    // .range(from,to) có thể skip/duplicate rows khi có concurrent inserts
     const { data, error } = await sbClient
       .from('warranty_tickets')
       .select('*')
-      .range(from, from + PAGE - 1);
-    if(error) throw new Error(error.message);
-    allRows = allRows.concat(data || []);
+      .eq('source_file', sourceFile)
+      .order('id', { ascending: true })
+      .range(from, to);
+
+    if(error){
+      fails++;
+      if(fails > 5) throw new Error(`Fetch ${sourceFile} page ${from}: ${error.message}`);
+      await new Promise(r => setTimeout(r, Math.min(1000 * fails, 8000)));
+      continue;
+    }
+
+    const chunk = data || [];
+    if(chunk.length === 0){
+      // Supabase trả về empty dù còn rows → tăng from và thử tiếp
+      console.warn(`[sbFetch] Empty chunk at from=${from} for ${sourceFile}`);
+      from += PAGE;
+      fails++;
+      if(fails > 5) break;
+      continue;
+    }
+
+    rows = rows.concat(chunk);
     from += PAGE;
-    if(onProgress) onProgress(Math.min(allRows.length, total), total);
+    fails = 0;
+
+    if(onProgress) onProgress(rows.length, total, sourceFile);
+    if(from < total) await new Promise(r => setTimeout(r, 30));
   }
-  return allRows;
+
+  return { rows, total };
+}
+
+// Merge PENDING + FINISHED: Pending > Xong, rồi ngày mới nhất
+function _mergeGroups(pendingRows, finishedRows){
+  // Build map: ma_phieu_bh → winner row
+  // Quy tắc: Pending thắng Xong; cùng status → ngày mới nhất
+  const map = new Map();
+
+  function parseTs(row){
+    const v = row.ngay_tao_phieu || '';
+    if(!v) return 0;
+    // dd/MM/yyyy hoặc ISO
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return new Date(+m[3], +m[2]-1, +m[1]).getTime();
+    return new Date(v).getTime() || 0;
+  }
+
+  function statusRank(row){ return (row.status||'').trim()==='Pending' ? 0 : 1; }
+
+  function winner(a, b){
+    const ra = statusRank(a), rb = statusRank(b);
+    if(ra !== rb) return ra < rb ? a : b;       // Pending(0) beats Xong(1)
+    const ta = parseTs(a), tb = parseTs(b);
+    return ta >= tb ? a : b;                     // newer date wins
+  }
+
+  for(const row of pendingRows){
+    const k = (row.ma_phieu_bh||'').toString().trim();
+    if(!k){ map.set('_p_'+Math.random(), row); continue; }
+    map.set(k, map.has(k) ? winner(map.get(k), row) : row);
+  }
+  for(const row of finishedRows){
+    const k = (row.ma_phieu_bh||'').toString().trim();
+    if(!k){ map.set('_f_'+Math.random(), row); continue; }
+    map.set(k, map.has(k) ? winner(map.get(k), row) : row);
+  }
+
+  return [...map.values()];
+}
+
+async function sbFetchAllRows(onProgress){
+  // ── Fetch PENDING group ──
+  const rp = await _fetchGroup('PENDING', (loaded, total) => {
+    if(onProgress) onProgress(loaded, total * 2, 'PENDING');
+  });
+
+  // ── Fetch FINISHED group ──
+  const rf = await _fetchGroup('FINISHED', (loaded, total) => {
+    if(onProgress) onProgress(rp.rows.length + loaded, rp.total + total, 'FINISHED');
+  });
+
+  console.log(`[sbFetch] PENDING: ${rp.rows.length} | FINISHED: ${rf.rows.length}`);
+
+  // ── Merge với quy tắc Pending > Xong → ngày mới nhất ──
+  const merged = _mergeGroups(rp.rows, rf.rows);
+  console.log(`[sbFetch] After merge: ${merged.length} unique rows`);
+
+  return merged;
 }
 
 /* Main connect function */
@@ -2366,8 +2469,10 @@ async function sbConnect(){
 
     sbHideLoading();
 
-    // Remap columns
+    // rawRows đã được merge + dedup trong sbFetchAllRows (_mergeGroups)
+    // Pending > Xong, ngày mới nhất → không cần dedup thêm
     const rows = rawRows.map(sbRemapRow);
+    console.log(`[sbConnect] Loaded ${rows.length} unique rows`);
 
     // Update stats UI
     const pendCount = rows.filter(r=>(r['Status']||'').trim()==='Pending').length;
@@ -2413,6 +2518,7 @@ function sbSetupAutoRefresh(url, key){
 async function sbSilentRefresh(){
   if(!sbClient) return;
   try{
+    // sbFetchAllRows đã merge + dedup đúng (Pending > Xong, ngày mới nhất)
     const rawRows = await sbFetchAllRows(null);
     const rows = rawRows.map(sbRemapRow);
     if(rows.length !== LAST_RC){
