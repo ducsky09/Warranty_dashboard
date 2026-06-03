@@ -237,6 +237,22 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
 .city-rank-3{background:rgba(247,129,102,.2);color:var(--a1)}
 .city-rank-n{background:var(--s2);color:var(--mu)}
 
+/* ── CITY TABLE ENHANCED ── */
+#pf-cityTable{font-size:.68rem;min-width:1200px}
+#pf-cityTable th{padding:5px 6px;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);border-bottom:1px solid var(--bd);background:var(--s2);text-align:center;white-space:nowrap;vertical-align:middle}
+#pf-cityTable th.th-city{text-align:left;min-width:130px}
+#pf-cityTable th.th-group{background:rgba(63,185,80,.08);border-left:2px solid rgba(63,185,80,.25);color:var(--a3)}
+#pf-cityTable th.th-group-pend{background:rgba(247,129,102,.08);border-left:2px solid rgba(247,129,102,.25);color:var(--a1)}
+#pf-cityTable td{padding:5px 6px;border-bottom:1px solid rgba(48,54,61,.4);text-align:center;vertical-align:middle;white-space:nowrap}
+#pf-cityTable td.td-city{text-align:left}
+#pf-cityTable tr:hover td{background:rgba(255,255,255,.025)}
+.day-bucket{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:38px}
+.day-bucket .pct-val{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:700}
+.day-bucket .pct-bar{width:100%;height:3px;border-radius:2px;margin-top:1px}
+.day-bucket .pct-sub{font-size:.52rem;color:var(--mu)}
+.pct-good{color:var(--a3)}.pct-mid{color:var(--a5)}.pct-bad{color:var(--a1)}.pct-worse{color:var(--dg)}
+.ktv-city-tag{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.56rem;background:rgba(88,166,255,.12);color:var(--a2);border:1px solid rgba(88,166,255,.22);margin-left:3px;font-weight:600;white-space:nowrap}
+
 /* ── SUPABASE PANEL ── */
 .sb-card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:20px;width:520px}
 .sb-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
@@ -744,35 +760,69 @@ footer{text-align:center;padding:12px;color:var(--mu);font-size:.62rem;border-to
     </div>
   </div>
   <div class="gf"><div class="card">
-    <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Tất cả thành phố · Click cột để sắp xếp</small></div>
-    <div style="overflow-x:auto"><table class="sp-table" id="pf-cityTable">
-      <thead><tr>
-        <th onclick="sortCityTable(0)" style="cursor:pointer"># Thành phố ↕</th>
-        <th onclick="sortCityTable(1)" style="text-align:center;cursor:pointer">Tổng ↕</th>
-        <th onclick="sortCityTable(2)" style="text-align:center;cursor:pointer">Đã xong ↕</th>
-        <th onclick="sortCityTable(3)" style="text-align:center;cursor:pointer">Pending ↕</th>
-        <th onclick="sortCityTable(4)" style="text-align:center;cursor:pointer">Tỉ lệ % ↕</th>
-        <th onclick="sortCityTable(5)" style="text-align:center;cursor:pointer">TB ngày ↕</th>
-        <th onclick="sortCityTable(6)" style="text-align:center;cursor:pointer">KPI ≤7d ↕</th>
-        <th onclick="sortCityTable(7)" style="text-align:center;cursor:pointer">% KPI ↕</th>
-        <th style="min-width:120px">Trực quan</th>
-      </tr></thead>
+    <div class="card-title">Bảng so sánh chi tiết Thành phố <small>Tất cả thành phố · Click tiêu đề để sắp xếp · % tính trên tổng của nhóm tương ứng</small></div>
+    <div style="overflow-x:auto"><table id="pf-cityTable">
+      <thead>
+        <tr>
+          <th class="th-city" rowspan="2" onclick="sortCityTable(0)" style="cursor:pointer"># Thành phố ↕</th>
+          <th rowspan="2" onclick="sortCityTable(1)" style="cursor:pointer">Tổng ↕</th>
+          <th rowspan="2" onclick="sortCityTable(2)" style="cursor:pointer">Đã xong ↕</th>
+          <th rowspan="2" onclick="sortCityTable(3)" style="cursor:pointer">Pending ↕</th>
+          <th rowspan="2" onclick="sortCityTable(4)" style="cursor:pointer">Tỉ lệ%<br>Xong ↕</th>
+          <th rowspan="2" onclick="sortCityTable(5)" style="cursor:pointer">TB<br>ngày ↕</th>
+          <th colspan="4" class="th-group" style="border-bottom:1px solid rgba(63,185,80,.3)">% Sửa Xong theo thời gian (/ tổng xong)</th>
+          <th colspan="4" class="th-group-pend" style="border-bottom:1px solid rgba(247,129,102,.3)">% Pending theo ngày chờ (/ tổng pending)</th>
+          <th rowspan="2" style="min-width:90px">Biểu đồ</th>
+        </tr>
+        <tr>
+          <th class="th-group" onclick="sortCityTable(6)" style="cursor:pointer">≤7n ↕</th>
+          <th class="th-group" onclick="sortCityTable(7)" style="cursor:pointer">≤10n ↕</th>
+          <th class="th-group" onclick="sortCityTable(8)" style="cursor:pointer">≤15n ↕</th>
+          <th class="th-group" onclick="sortCityTable(9)" style="cursor:pointer">&gt;15n ↕</th>
+          <th class="th-group-pend" onclick="sortCityTable(10)" style="cursor:pointer">≤7n ↕</th>
+          <th class="th-group-pend" onclick="sortCityTable(11)" style="cursor:pointer">≤10n ↕</th>
+          <th class="th-group-pend" onclick="sortCityTable(12)" style="cursor:pointer">≤15n ↕</th>
+          <th class="th-group-pend" onclick="sortCityTable(13)" style="cursor:pointer">&gt;15n ↕</th>
+        </tr>
+      </thead>
       <tbody id="pf-cityTbody"></tbody>
     </table></div>
+    <div style="margin-top:9px;font-size:.62rem;color:var(--mu);display:flex;gap:12px;flex-wrap:wrap;padding:0 4px;border-top:1px solid var(--bd);padding-top:8px">
+      <span>📗 <b style="color:var(--a3)">Xong ≤7n</b>: Hoàn thành trong 7 ngày kể từ tạo phiếu – đạt KPI</span>
+      <span>📙 <b style="color:var(--a5)">≤10n / ≤15n</b>: Vượt KPI nhưng còn kiểm soát được</span>
+      <span>📕 <b style="color:var(--dg)">Xong &gt;15n</b>: Cần xem lại quy trình sửa chữa</span>
+      <span>🔶 <b style="color:var(--a1)">Pending &gt;15n</b>: Tồn đọng lâu – ưu tiên giải quyết ngay</span>
+    </div>
   </div></div>
 
   <!-- TOP KTV -->
-  <div class="sec-title">Top Kỹ Thuật Viên <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a3);margin-left:6px">Theo số phiếu đã sửa xong</small></div>
+  <div class="sec-title">Top Kỹ Thuật Viên <small style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--a3);margin-left:6px">Tên KTV · Thành phố chính · Số phiếu sửa xong</small></div>
   <div class="g2">
     <div class="card">
-      <div class="card-title">Top 10 KTV – Số phiếu hoàn thành</div>
-      <div style="height:270px"><canvas id="pf-cKTV"></canvas></div>
+      <div class="card-title">Top 10 KTV – Số phiếu hoàn thành <small>Tên · Thành phố chính</small></div>
+      <div style="height:310px"><canvas id="pf-cKTV"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Top 10 KTV – TB ngày sửa (ngày ít = tốt)</div>
-      <div style="height:270px"><canvas id="pf-cKTVDays"></canvas></div>
+      <div class="card-title">Top 10 KTV – TB ngày sửa (ngày ít = tốt) <small>Tên · Thành phố chính</small></div>
+      <div style="height:310px"><canvas id="pf-cKTVDays"></canvas></div>
     </div>
   </div>
+  <div class="gf"><div class="card">
+    <div class="card-title">Bảng chi tiết KTV – Top 15 theo phiếu hoàn thành <small>Kèm Thành phố chính</small></div>
+    <div style="overflow-x:auto"><table class="lk-table" id="pf-ktvTable">
+      <thead><tr>
+        <th style="width:28px">#</th>
+        <th>Họ tên KTV</th>
+        <th style="min-width:110px">Thành phố chính</th>
+        <th style="text-align:center">Phiếu xong</th>
+        <th style="text-align:center">TB ngày</th>
+        <th style="text-align:center">KPI ≤7n</th>
+        <th style="text-align:center">% KPI</th>
+        <th style="min-width:120px">Phân bố thời gian</th>
+      </tr></thead>
+      <tbody id="pf-ktvTbody"></tbody>
+    </table></div>
+  </div></div>
 
   <!-- HIỆU SUẤT THEO SP -->
   <div class="sec-title">Hiệu suất theo Sản phẩm</div>
@@ -1971,26 +2021,56 @@ function renderPerf(){
       plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyleWidth:7,font:{size:10}}},
         tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${pct(c.raw,total)})`}}}}});
 
-  // ALL cities - no limit
+  // ALL cities - no limit - ENHANCED with day buckets
   const allCities=[...new Set(ALL_ROWS.map(r=>(r['City']||'').trim()).filter(Boolean))].sort();
+  // Helper: calc days pending from creation date to today (for Pending rows)
+  const today=new Date(); today.setHours(0,0,0,0);
+  function calcPendingAge(r){
+    const d=parseDate(r['Ngày tạo phiếu']);
+    if(!d) return null;
+    const diff=Math.round((today-d)/(1000*60*60*24));
+    return diff>=0&&diff<1000?diff:null;
+  }
   const cityStats=allCities.map(city=>{
     const sub=rows.filter(r=>(r['City']||'').trim()===city);
     if(!sub.length)return null;
     const xongSub=sub.filter(r=>parseDate(r['Ngày KTV sửa xong'])!==null);
-    const pend=sub.filter(r=>(r['Status']||'').trim()==='Pending').length;
-    const kpiOkCity=xongSub.filter(r=>{
-      const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
-      return d!==null&&d<=7;
-    }).length;
+    const pendSub=sub.filter(r=>(r['Status']||'').trim()==='Pending');
+    const pendCnt=pendSub.length;
+    // Days from tao->xong for completed rows
     const dv=xongSub.map(r=>{
       const d=calcKPI(parseDate(r['Ngày tạo phiếu']),parseDate(r['Ngày KTV sửa xong']));
       return d!==null&&d>=0&&d<500?d:null;
     }).filter(d=>d!==null);
     const avgD=dv.length?+(dv.reduce((s,v)=>s+v,0)/dv.length).toFixed(1):0;
-    return{city,total:sub.length,xong:xongSub.length,pend,
+    // Xong day buckets (tao -> xong)
+    const xB7=dv.filter(d=>d<=7).length;
+    const xB10=dv.filter(d=>d>7&&d<=10).length;
+    const xB15=dv.filter(d=>d>10&&d<=15).length;
+    const xBgt15=dv.filter(d=>d>15).length;
+    const xTotal=dv.length||1;
+    // Pending age buckets (tao -> today)
+    const pv=pendSub.map(r=>calcPendingAge(r)).filter(d=>d!==null);
+    const pB7=pv.filter(d=>d<=7).length;
+    const pB10=pv.filter(d=>d>7&&d<=10).length;
+    const pB15=pv.filter(d=>d>10&&d<=15).length;
+    const pBgt15=pv.filter(d=>d>15).length;
+    const pTotal=pv.length||1;
+    return{
+      city,total:sub.length,xong:xongSub.length,pend:pendCnt,
       rate:+(xongSub.length/sub.length*100).toFixed(1),
-      avgDays:avgD,kpiOk:kpiOkCity,
-      kpiRate:xongSub.length?+(kpiOkCity/xongSub.length*100).toFixed(1):0};
+      avgDays:avgD,
+      // xong buckets (%)
+      xB7r:+(xB7/xTotal*100).toFixed(1),xB7n:xB7,
+      xB10r:+(xB10/xTotal*100).toFixed(1),xB10n:xB10,
+      xB15r:+(xB15/xTotal*100).toFixed(1),xB15n:xB15,
+      xBgt15r:+(xBgt15/xTotal*100).toFixed(1),xBgt15n:xBgt15,
+      // pend buckets (%)
+      pB7r:+(pB7/pTotal*100).toFixed(1),pB7n:pB7,
+      pB10r:+(pB10/pTotal*100).toFixed(1),pB10n:pB10,
+      pB15r:+(pB15/pTotal*100).toFixed(1),pB15n:pB15,
+      pBgt15r:+(pBgt15/pTotal*100).toFixed(1),pBgt15n:pBgt15,
+    };
   }).filter(Boolean).sort((a,b)=>b.total-a.total);
 
   cityTableData=cityStats;
@@ -2021,39 +2101,76 @@ function renderPerf(){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false}}}}});
 
-  // Top KTV
+  // Top KTV – capture city (majority city per KTV)
   const ktvMap={};
   rows.forEach(r=>{
     const ktv=(r['Họ tên KTV']||'').trim(); if(!ktv||ktv==='nan')return;
     const xd=parseDate(r['Ngày KTV sửa xong']); if(!xd)return;
+    const city=(r['City']||'').trim();
     const d=calcKPI(parseDate(r['Ngày tạo phiếu']),xd);
-    if(!ktvMap[ktv])ktvMap[ktv]={cnt:0,days:[]};
+    if(!ktvMap[ktv])ktvMap[ktv]={cnt:0,days:[],cityMap:{}};
     ktvMap[ktv].cnt++;
+    if(city) ktvMap[ktv].cityMap[city]=(ktvMap[ktv].cityMap[city]||0)+1;
     if(d!==null&&d>=0&&d<500)ktvMap[ktv].days.push(d);
   });
-  const ktvList=Object.entries(ktvMap).map(([k,v])=>({
-    name:k.replace(/^MM\d+[-\s]*/,'').trim()||k,
-    cnt:v.cnt,
-    avgD:v.days.length?+(v.days.reduce((s,d)=>s+d,0)/v.days.length).toFixed(1):0
-  })).sort((a,b)=>b.cnt-a.cnt).slice(0,10);
+  function topCity(cityMap){
+    const e=Object.entries(cityMap);
+    if(!e.length)return '';
+    return e.sort((a,b)=>b[1]-a[1])[0][0];
+  }
+  const ktvList=Object.entries(ktvMap).map(([k,v])=>{
+    const days=v.days;
+    const tot=days.length||1;
+    const b7=days.filter(d=>d<=7).length;
+    const b10=days.filter(d=>d>7&&d<=10).length;
+    const b15=days.filter(d=>d>10&&d<=15).length;
+    const bgt15=days.filter(d=>d>15).length;
+    return{
+      rawName:k,
+      name:k.replace(/^MM\d+[-\s]*/,'').trim()||k,
+      city:topCity(v.cityMap),
+      cnt:v.cnt,
+      avgD:days.length?+(days.reduce((s,d)=>s+d,0)/days.length).toFixed(1):0,
+      kpi7:b7,
+      b7r:+(b7/tot*100).toFixed(1),
+      b10r:+(b10/tot*100).toFixed(1),
+      b15r:+(b15/tot*100).toFixed(1),
+      bgt15r:+(bgt15/tot*100).toFixed(1),
+    };
+  }).sort((a,b)=>b.cnt-a.cnt).slice(0,15);
+
+  // Build chart labels: "Tên KTV · TP"
+  function ktvLabel(d,maxLen=32){
+    const label=d.city?`${d.name} · ${d.city}`:d.name;
+    return label.length>maxLen?label.slice(0,maxLen-1)+'…':label;
+  }
 
   dc('pf-cKTV'); dc('pf-cKTVDays');
+  const top10ktv=ktvList.slice(0,10);
   const ctxK1=document.getElementById('pf-cKTV')?.getContext('2d');
   if(ctxK1) CH['pf-cKTV']=new Chart(ctxK1,{type:'bar',
-    data:{labels:ktvList.map(d=>d.name.slice(0,28)),
-      datasets:[{data:ktvList.map(d=>d.cnt),backgroundColor:ktvList.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
+    data:{labels:top10ktv.map(d=>ktvLabel(d)),
+      datasets:[{data:top10ktv.map(d=>d.cnt),backgroundColor:top10ktv.map((_,i)=>PAL[i%PAL.length]),borderRadius:4,borderSkipped:false}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${ktvList[t[0].dataIndex].name}`,label:c=>`  ${fmt(c.raw)} phiếu xong`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}}});
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:t=>`${top10ktv[t[0].dataIndex].name}`,
+        label:c=>`  ${fmt(c.raw)} phiếu xong`,
+        afterLabel:c=>`  TP chính: ${top10ktv[c.dataIndex].city||'—'}`
+      }}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10},maxTicksLimit:10}}}}});
 
   const kd=[...ktvList].filter(d=>d.avgD>0).sort((a,b)=>a.avgD-b.avgD).slice(0,10);
   const ctxK2=document.getElementById('pf-cKTVDays')?.getContext('2d');
   if(ctxK2) CH['pf-cKTVDays']=new Chart(ctxK2,{type:'bar',
-    data:{labels:kd.map(d=>d.name.slice(0,28)),
+    data:{labels:kd.map(d=>ktvLabel(d)),
       datasets:[{data:kd.map(d=>d.avgD),backgroundColor:kd.map(d=>d.avgD<=7?'#3fb95099':d.avgD<=20?'#e3b34199':'#f7816699'),borderRadius:4,borderSkipped:false}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>`${kd[t[0].dataIndex].name}`,label:c=>`  ${c.raw} ngày TB`}}},
-      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}}});
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:t=>`${kd[t[0].dataIndex].name}`,
+        label:c=>`  ${c.raw} ngày TB`,
+        afterLabel:c=>`  TP chính: ${kd[c.dataIndex].city||'—'}`
+      }}},
+      scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10},maxTicksLimit:10}}}}});
 
   // SP performance
   const spMap={};
@@ -2087,27 +2204,88 @@ function renderPerf(){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`  ${c.raw} ngày TB`}}},
       scales:{x:{grid:{color:'#1c2230'},border:{display:false}},y:{grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}   }});
 
+  // KTV Detail Table
+  renderKtvTable(ktvList);
+
   renderPerfChart();
 }
 
+function renderKtvTable(ktvList){
+  const tbody=document.getElementById('pf-ktvTbody');if(!tbody)return;
+  const top15=ktvList.slice(0,15);
+  tbody.innerHTML=top15.map((d,i)=>{
+    // We need per-KTV day buckets – re-compute from ktvList data isn't enough; use ALL_ROWS
+    // ktvList already has days[] stored in ktvMap, but we only have avgD here
+    // For the table we show: name, city, cnt, avgD, and KPI ≤7
+    const kpiN=d.kpi7||0;
+    const kpiR=d.cnt?+(kpiN/d.cnt*100).toFixed(1):0;
+    const dayColor=d.avgD<=7?'var(--a3)':d.avgD<=15?'var(--a5)':'var(--a1)';
+    const kpiColor=kpiR>=70?'var(--a3)':kpiR>=40?'var(--a5)':'var(--a1)';
+    return`<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--mu)">${i+1}</td>
+      <td><span style="font-weight:600">${d.name}</span></td>
+      <td><span class="ktv-city-tag">${d.city||'—'}</span></td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--a3);font-weight:700">${fmt(d.cnt)}</td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:${dayColor}">${d.avgD>0?d.avgD+'n':'—'}</td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:var(--a3)">${fmt(kpiN)}</td>
+      <td style="text-align:center"><span class="rate-badge ${kpiR>=70?'rate-hi':kpiR>=40?'rate-mid':'rate-lo'}">${kpiR}%</span></td>
+      <td><div style="display:flex;gap:2px;height:8px;border-radius:3px;overflow:hidden;min-width:100px">
+        <div style="width:${d.b7r||0}%;background:#3fb950aa" title="≤7n: ${d.b7r||0}%"></div>
+        <div style="width:${d.b10r||0}%;background:#e3b341aa" title="≤10n: ${d.b10r||0}%"></div>
+        <div style="width:${d.b15r||0}%;background:#ffa657aa" title="≤15n: ${d.b15r||0}%"></div>
+        <div style="width:${d.bgt15r||0}%;background:#f85149aa" title=">15n: ${d.bgt15r||0}%"></div>
+      </div>
+      <div style="display:flex;gap:6px;font-size:.55rem;color:var(--mu);margin-top:2px">
+        <span style="color:#3fb950">≤7: ${d.b7r||0}%</span>
+        <span style="color:#e3b341">≤10: ${d.b10r||0}%</span>
+        <span style="color:#ffa657">≤15: ${d.b15r||0}%</span>
+        <span style="color:#f85149">>15: ${d.bgt15r||0}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// Sortable columns mapping: index → field name in cityStats object: index → field name in cityStats object
+const CITY_SORT_KEYS=['city','total','xong','pend','rate','avgDays',
+  'xB7r','xB10r','xB15r','xBgt15r','pB7r','pB10r','pB15r','pBgt15r'];
+
+function mkBucket(pct,cnt,colorCls,title){
+  // mini bar height proportional to pct
+  const barW=Math.min(100,pct);
+  return `<div class="day-bucket" title="${title}: ${cnt} phiếu (${pct}%)">
+    <span class="pct-val ${colorCls}">${pct}%</span>
+    <div class="pct-bar" style="background:currentColor;opacity:.35;width:${barW}%;min-width:${pct>0?3:0}px"></div>
+    <span class="pct-sub">${cnt}p</span>
+  </div>`;
+}
+
 function renderCityTable(){
+  const key=CITY_SORT_KEYS[cityTableSortCol]||'total';
   const sorted=[...cityTableData].sort((a,b)=>{
-    const va=Object.values(a)[cityTableSortCol]||0,vb=Object.values(b)[cityTableSortCol]||0;
+    const va=a[key]??0, vb=b[key]??0;
+    if(typeof va==='string') return cityTableSortAsc?va.localeCompare(vb):vb.localeCompare(va);
     return cityTableSortAsc?(va>vb?1:-1):(va<vb?1:-1);
   });
   const tbody=document.getElementById('pf-cityTbody');if(!tbody)return;
   tbody.innerHTML=sorted.map((d,i)=>{
     const cls=i===0?'city-rank-1':i===1?'city-rank-2':i===2?'city-rank-3':'city-rank-n';
-    const rateColor=d.rate>=15?'#3fb950':d.rate>=8?'#e3b341':'#f78166';
-    const dayColor=d.avgDays<=20?'#3fb950':d.avgDays<=50?'#e3b341':'#f78166';
+    const dayColor=d.avgDays<=7?'#3fb950':d.avgDays<=15?'#e3b341':'#f78166';
     return`<tr>
-      <td style="display:flex;align-items:center;gap:7px"><span class="city-rank-badge ${cls}">${i+1}</span>${d.city}</td>
-      <td style="text-align:center;font-family:'JetBrains Mono',monospace">${fmt(d.total)}</td>
-      <td style="text-align:center;color:var(--a3);font-family:'JetBrains Mono',monospace">${fmt(d.xong)}</td>
-      <td style="text-align:center;color:var(--a1);font-family:'JetBrains Mono',monospace">${fmt(d.pend)}</td>
-      <td style="text-align:center"><span class="rate-badge ${d.rate>=15?'rate-hi':d.rate>=8?'rate-mid':'rate-lo'}">${d.rate}%</span></td>
-      <td style="text-align:center;font-family:'JetBrains Mono',monospace;color:${dayColor}">${d.avgDays>0?d.avgDays+'d':'—'}</td>
-      <td><div class="stack-bar" style="min-width:100px">
+      <td class="td-city"><div style="display:flex;align-items:center;gap:6px"><span class="city-rank-badge ${cls}">${i+1}</span><span>${d.city}</span></div></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${fmt(d.total)}</td>
+      <td style="color:var(--a3);font-family:'JetBrains Mono',monospace;font-weight:700">${fmt(d.xong)}</td>
+      <td style="color:var(--a1);font-family:'JetBrains Mono',monospace;font-weight:700">${fmt(d.pend)}</td>
+      <td><span class="rate-badge ${d.rate>=40?'rate-hi':d.rate>=20?'rate-mid':'rate-lo'}">${d.rate}%</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${dayColor}">${d.avgDays>0?d.avgDays+'n':'—'}</td>
+      <td style="border-left:2px solid rgba(63,185,80,.2)">${mkBucket(d.xB7r,d.xB7n,'pct-good','Xong ≤7 ngày')}</td>
+      <td>${mkBucket(d.xB10r,d.xB10n,'pct-mid','Xong >7–10 ngày')}</td>
+      <td>${mkBucket(d.xB15r,d.xB15n,'pct-bad','Xong >10–15 ngày')}</td>
+      <td>${mkBucket(d.xBgt15r,d.xBgt15n,'pct-worse','Xong >15 ngày')}</td>
+      <td style="border-left:2px solid rgba(247,129,102,.2)">${mkBucket(d.pB7r,d.pB7n,'pct-good','Pending ≤7 ngày – mới')}</td>
+      <td>${mkBucket(d.pB10r,d.pB10n,'pct-mid','Pending >7–10 ngày')}</td>
+      <td>${mkBucket(d.pB15r,d.pB15n,'pct-bad','Pending >10–15 ngày')}</td>
+      <td>${mkBucket(d.pBgt15r,d.pBgt15n,'pct-worse','Pending >15 ngày – tồn đọng')}</td>
+      <td><div class="stack-bar" style="min-width:80px">
         <div class="stack-seg" style="width:${d.total?d.xong/d.total*100:0}%;background:#3fb95088"></div>
         <div class="stack-seg" style="width:${d.total?d.pend/d.total*100:0}%;background:#f7816688"></div>
       </div></td>
